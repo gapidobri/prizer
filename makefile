@@ -1,0 +1,5 @@
+update-db:
+	atlas schema apply --env local --auto-approve
+
+generate-spec:
+	SWAGGER_GENERATE_EXTENSION=false swagger generate spec -m --exclude-deps -o ./api/swagger.yaml

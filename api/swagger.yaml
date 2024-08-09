@@ -1,0 +1,68 @@
+basePath: /
+consumes:
+    - application/json
+definitions:
+    ErrorResponse:
+        properties:
+            error:
+                type: string
+        type: object
+    Prize:
+        properties:
+            description:
+                type: string
+            name:
+                type: string
+        type: object
+    RollRequest:
+        properties:
+            address:
+                type: string
+            email:
+                type: string
+        type: object
+    RollResponse:
+        properties:
+            prize:
+                $ref: '#/definitions/Prize'
+            won:
+                type: boolean
+        type: object
+host: localhost:8080
+info:
+    description: Backend for prize games
+    license:
+        name: MIT
+        url: https://opensource.org/licenses/MIT
+    title: Prizer
+    version: "1.0"
+paths:
+    /games/{gameId}/roll:
+        post:
+            operationId: roll
+            parameters:
+                - in: path
+                  name: gameId
+                  type: string
+                - in: body
+                  name: body
+                  schema:
+                    $ref: '#/definitions/RollRequest'
+                    type: object
+            responses:
+                "200":
+                    description: RollResponse
+                    schema:
+                        $ref: '#/definitions/RollResponse'
+                "403":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+            tags:
+                - games
+produces:
+    - application/json
+schemes:
+    - http
+    - https
+swagger: "2.0"
