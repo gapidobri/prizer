@@ -1,8 +1,10 @@
-package api
+package public
 
 import (
+	"github.com/gapidobri/prizer/internal/api"
 	"github.com/gapidobri/prizer/internal/service"
 	"github.com/gin-gonic/gin"
+	"log"
 )
 
 type Server struct {
@@ -17,10 +19,13 @@ func NewServer(gameService *service.GameService) *Server {
 	}
 }
 
-func (s *Server) Run() error {
-	s.engine.Use(ErrorHandler)
+func (s *Server) Run(address string) {
+	s.engine.Use(api.ErrorHandler)
 
 	s.gameRoutes()
 
-	return s.engine.Run()
+	err := s.engine.Run(address)
+	if err != nil {
+		log.Panic(err)
+	}
 }

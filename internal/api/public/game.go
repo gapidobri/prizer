@@ -1,4 +1,4 @@
-package api
+package public
 
 import (
 	"github.com/gapidobri/prizer/internal/pkg/models/api"
@@ -21,7 +21,9 @@ func (s *Server) gameRoutes() {
 	//
 	// responses:
 	//   200: RollResponse
+	//   400: ErrorResponse
 	//   403: ErrorResponse
+	//   500: ErrorResponse
 	//
 	games.POST(":gameId/roll", func(c *gin.Context) {
 		var rollRequest api.RollRequest

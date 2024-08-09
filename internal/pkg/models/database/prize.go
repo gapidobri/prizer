@@ -9,6 +9,8 @@ type Prize struct {
 }
 
 type GetPrizesFilter struct {
-	GameId        *string
-	AvailableOnly bool
+	GameId                *string
+	CollaborationMethodId *string
+	DrawMethodId          *string
+	AvailableOnly         bool
 }

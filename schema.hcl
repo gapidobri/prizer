@@ -24,6 +24,119 @@ table "game" {
   }
 }
 
+table "collaboration_method" {
+  schema = schema.public
+  column "collaboration_method_id" {
+    type = uuid
+    default = sql("gen_random_uuid()")
+  }
+  column "game_id" {
+    type = uuid
+  }
+  column "name" {
+    type = varchar
+    default = "Collaboration method"
+  }
+  column "fields" {
+    type = json
+  }
+  primary_key {
+    columns = [
+      column.collaboration_method_id
+    ]
+  }
+  foreign_key "game_fk" {
+    columns = [column.game_id]
+    ref_columns = [table.game.column.game_id]
+    on_delete = CASCADE
+    on_update = CASCADE
+  }
+}
+
+table "collaboration_method_draw_method" {
+  schema = schema.public
+  column "collaboration_method_id" {
+    type = uuid
+  }
+  column "draw_method_id" {
+    type = uuid
+  }
+  primary_key {
+    columns = [
+      column.collaboration_method_id,
+      column.draw_method_id
+    ]
+  }
+  foreign_key "collaboration_method_fk" {
+    columns = [column.collaboration_method_id]
+    ref_columns = [table.collaboration_method.column.collaboration_method_id]
+    on_delete = CASCADE
+    on_update = CASCADE
+  }
+  foreign_key "draw_method_fk" {
+    columns = [column.draw_method_id]
+    ref_columns = [table.draw_method.column.draw_method_id]
+    on_delete = CASCADE
+    on_update = CASCADE
+  }
+}
+
+enum "draw_method_enum" {
+  schema = schema.public
+  values = ["first_n", "chance"]
+}
+
+table "draw_method" {
+  schema = schema.public
+  column "draw_method_id" {
+    type = uuid
+    default = sql("gen_random_uuid()")
+  }
+  column "name" {
+    type = varchar
+    default = "Draw method"
+  }
+  column "method" {
+    type = enum.draw_method_enum
+  }
+  column "data" {
+    type = json
+  }
+  primary_key {
+    columns = [
+      column.draw_method_id
+    ]
+  }
+}
+
+table "draw_method_prize" {
+  schema = schema.public
+  column "draw_method_id" {
+    type = uuid
+  }
+  column "prize_id" {
+    type = uuid
+  }
+  primary_key {
+    columns = [
+      column.draw_method_id,
+      column.prize_id
+    ]
+  }
+  foreign_key "draw_method_fk" {
+    columns = [column.draw_method_id]
+    ref_columns = [table.draw_method.column.draw_method_id]
+    on_delete = CASCADE
+    on_update = CASCADE
+  }
+  foreign_key "prize_fk" {
+    columns = [column.prize_id]
+    ref_columns = [table.prize.column.prize_id]
+    on_delete = CASCADE
+    on_update = CASCADE
+  }
+}
+
 table "prize" {
   schema = schema.public
   column "prize_id" {
@@ -110,10 +223,6 @@ table "collaborator" {
     type = uuid
     null = false
   }
-  column "last_roll_time" {
-    type = timestamp
-    null = true
-  }
   unique "email_game_id" {
     columns = [column.email, column.game_id]
   }
@@ -125,6 +234,38 @@ table "collaborator" {
   foreign_key "game_fk" {
     columns = [column.game_id]
     ref_columns = [table.game.column.game_id]
+    on_delete = CASCADE
+    on_update = CASCADE
+  }
+}
+
+table "collaboration" {
+  schema = schema.public
+  column "collaboration_method_id" {
+    type = uuid
+  }
+  column "collaborator_id" {
+    type = uuid
+  }
+  column "created_at" {
+    type = timestamp
+    default = sql("now()")
+  }
+  primary_key {
+    columns = [
+      column.collaboration_method_id,
+      column.collaborator_id
+    ]
+  }
+  foreign_key "collaboration_method_fk" {
+    columns = [column.collaboration_method_id]
+    ref_columns = [table.collaboration_method.column.collaboration_method_id]
+    on_delete = CASCADE
+    on_update = CASCADE
+  }
+  foreign_key "collaborator_fk" {
+    columns = [column.collaborator_id]
+    ref_columns = [table.collaborator.column.collaborator_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
