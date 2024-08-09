@@ -8,6 +8,7 @@ import (
 	"github.com/gapidobri/prizer/internal/service"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/spf13/viper"
 	"log"
 )
 
@@ -21,7 +22,7 @@ func Run() {
 	}
 
 	// Clients
-	addressValidationClient, err := addressvalidation.NewClient(ctx, "<access_token>")
+	addressValidationClient, err := addressvalidation.NewClient(ctx, viper.GetString("address_validation_api_key"))
 	if err != nil {
 		log.Fatal(err)
 	}

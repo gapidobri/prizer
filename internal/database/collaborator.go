@@ -64,7 +64,7 @@ func (c *collaboratorRepository) CreateCollaborator(ctx context.Context, create 
 			FROM collaborator
 			WHERE game_id = $1
 				AND (email = $2 OR address = $3)
-		`)
+		`, create.GameId, create.Email, create.Address)
 		switch {
 		case err == nil:
 			return nil, er.CollaboratorExists
@@ -76,14 +76,14 @@ func (c *collaboratorRepository) CreateCollaborator(ctx context.Context, create 
 	}
 
 	_, err := c.db.NamedExecContext(ctx, `
-		INSERT INTO collaborator (email, game_id)
-		VALUES (:email, :game_id)
+		INSERT INTO collaborator (game_id, email, address)
+		VALUES (:game_id, :email, :address)
 	`, create)
 	if err != nil {
 		return nil, err
 	}
 
-	collaborator, err := c.GetCollaboratorFromEmail(ctx, create.Email, create.GameId)
+	collaborator, err := c.GetCollaboratorFromEmail(ctx, create.GameId, create.Email)
 	if err != nil {
 		return nil, err
 	}
