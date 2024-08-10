@@ -183,9 +183,10 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 		switch *participationMethod.Limit {
 		case dbModels.ParticipationLimitDaily:
 			participations, err := s.participationRepository.GetParticipations(ctx, dbModels.GetParticipationsFilter{
-				UserId: &user.Id,
-				From:   lo.ToPtr(util.StripTime(time.Now())),
-				To:     lo.ToPtr(time.Now()),
+				UserId:                &user.Id,
+				ParticipationMethodId: &participationMethod.Id,
+				From:                  lo.ToPtr(util.StripTime(time.Now())),
+				To:                    lo.ToPtr(time.Now()),
 			})
 			if err != nil {
 				return nil, err
@@ -197,15 +198,18 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 	}
 
 	// Check participation unique fields
-	participations, err := s.participationRepository.GetParticipations(ctx, dbModels.GetParticipationsFilter{
-		UserId: &user.Id,
-		Fields: &uniqueParticipationFields,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if len(participations) != 0 {
-		return nil, er.ParticipationDataExists
+	if len(uniqueParticipationFields) > 0 {
+		participations, err := s.participationRepository.GetParticipations(ctx, dbModels.GetParticipationsFilter{
+			UserId:                &user.Id,
+			ParticipationMethodId: &participationMethod.Id,
+			Fields:                &uniqueParticipationFields,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if len(participations) != 0 {
+			return nil, er.ParticipationDataExists
+		}
 	}
 
 	// Participate in all draw methods

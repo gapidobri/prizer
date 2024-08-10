@@ -40,6 +40,9 @@ func (r *participationRepository) GetParticipations(ctx context.Context, filter 
 	if filter.UserId != nil {
 		query = query.Where(sq.Eq{"user_id": filter.UserId})
 	}
+	if filter.ParticipationMethodId != nil {
+		query = query.Where(sq.Eq{"participation_method_id": filter.ParticipationMethodId})
+	}
 	if filter.From != nil {
 		query = query.Where(sq.GtOrEq{"created_at": filter.From})
 	}

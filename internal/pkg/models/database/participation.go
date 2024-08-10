@@ -17,8 +17,9 @@ type CreateParticipation struct {
 }
 
 type GetParticipationsFilter struct {
-	UserId *string
-	From   *time.Time
-	To     *time.Time
-	Fields *JsonMap
+	UserId                *string
+	ParticipationMethodId *string
+	From                  *time.Time
+	To                    *time.Time
+	Fields                *JsonMap
 }

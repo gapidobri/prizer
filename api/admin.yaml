@@ -1,0 +1,99 @@
+basePath: /
+consumes:
+    - application/json
+definitions:
+    ErrorResponse:
+        properties:
+            code:
+                type: string
+            error:
+                type: string
+        type: object
+    Game:
+        properties:
+            id:
+                type: string
+            name:
+                type: string
+        type: object
+    GetGameResponse:
+        $ref: '#/definitions/Game'
+    ParticipationRequest:
+        properties:
+            fields:
+                additionalProperties: {}
+                type: object
+        type: object
+    ParticipationResponse:
+        properties:
+            prizes:
+                items:
+                    $ref: '#/definitions/Prize'
+                type: array
+        type: object
+    Prize:
+        properties:
+            description:
+                type: string
+            name:
+                type: string
+        type: object
+host: localhost:8080
+info:
+    description: Backend for prize games
+    license:
+        name: MIT
+        url: https://opensource.org/licenses/MIT
+    title: Prizer
+    version: "1.0"
+paths:
+    /games:
+        get:
+            operationId: getGames
+            responses:
+                "200":
+                    $ref: '#/responses/GetGamesResponse'
+                "400":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "403":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "500":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+            tags:
+                - admin
+                - games
+    /games/{gameId}:
+        get:
+            operationId: getGame
+            responses:
+                "200":
+                    description: GetGameResponse
+                    schema:
+                        $ref: '#/definitions/GetGameResponse'
+                "400":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "403":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "500":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+            tags:
+                - admin
+                - games
+produces:
+    - application/json
+schemes:
+    - http
+    - https
+swagger: "2.0"
