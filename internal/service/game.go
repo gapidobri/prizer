@@ -225,6 +225,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 	for _, drawMethod := range drawMethods {
 		var prizes []dbModels.Prize
 		prizes, err = s.prizeRepository.GetPrizes(ctx, dbModels.GetPrizesFilter{
+			GameId:        &gameId,
 			DrawMethodId:  &drawMethod.Id,
 			AvailableOnly: true,
 		})
@@ -257,23 +258,23 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 		}
 	}
 
-	for _, prize := range wonPrizes {
-		err = s.wonPrizeRepository.CreateWonPrize(ctx, dbModels.CreateWonPrize{
-			PrizeId: prize.Id,
-			UserId:  user.Id,
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	err = s.participationRepository.CreateParticipation(ctx, dbModels.CreateParticipation{
+	participation, err := s.participationRepository.CreateParticipation(ctx, dbModels.CreateParticipation{
 		ParticipationMethodId: participationMethodId,
 		UserId:                user.Id,
 		Fields:                participationFields,
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	for _, prize := range wonPrizes {
+		err = s.wonPrizeRepository.CreateWonPrize(ctx, dbModels.CreateWonPrize{
+			ParticipationId: participation.Id,
+			PrizeId:         prize.Id,
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	apiPrizes := lo.Map(wonPrizes, func(prize dbModels.Prize, _ int) api.Prize {

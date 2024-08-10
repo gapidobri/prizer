@@ -28,8 +28,8 @@ func (w *wonPrizeRepository) CreateWonPrize(ctx context.Context, wonPrize databa
 	defer tx.Rollback()
 
 	_, err = tx.NamedExecContext(ctx, `
-		INSERT INTO won_prize (prize_id, user_id)
-		VALUES (:prize_id, :user_id)
+		INSERT INTO won_prize (prize_id, participation_id)
+		VALUES (:prize_id, :participation_id)
 	`, wonPrize)
 	if err != nil {
 		return err

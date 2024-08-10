@@ -173,23 +173,16 @@ table "prize" {
 
 table "won_prize" {
   schema = schema.public
-  column "won_prize_id" {
-    type = uuid
-    default = sql("gen_random_uuid()")
-  }
   column "prize_id" {
     type = uuid
   }
-  column "user_id" {
+  column "participation_id" {
     type = uuid
-  }
-  column "created_at" {
-    type = timestamp
-    default = sql("now()")
   }
   primary_key {
     columns = [
-      column.won_prize_id
+      column.prize_id,
+      column.participation_id
     ]
   }
   foreign_key "prize_fk" {
@@ -198,9 +191,9 @@ table "won_prize" {
     on_delete = CASCADE
     on_update = CASCADE
   }
-  foreign_key "user_fk" {
-    columns = [column.user_id]
-    ref_columns = [table.user.column.user_id]
+  foreign_key "participation_fk" {
+    columns = [column.participation_id]
+    ref_columns = [table.participation.column.participation_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
@@ -246,6 +239,10 @@ table "user" {
 
 table "participation" {
   schema = schema.public
+  column "participation_id" {
+    type = uuid
+    default = sql("gen_random_uuid()")
+  }
   column "participation_method_id" {
     type = uuid
   }
@@ -259,11 +256,16 @@ table "participation" {
   column "fields" {
     type = json
   }
+  unique "method_user_time" {
+    columns = [
+      column.participation_id,
+      column.participation_method_id,
+      column.user_id
+    ]
+  }
   primary_key {
     columns = [
-      column.participation_method_id,
-      column.user_id,
-      column.created_at,
+      column.participation_id,
     ]
   }
   foreign_key "participation_method_fk" {

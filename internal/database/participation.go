@@ -6,10 +6,11 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gapidobri/prizer/internal/pkg/models/database"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 type ParticipationRepository interface {
-	CreateParticipation(ctx context.Context, createParticipation database.CreateParticipation) error
+	CreateParticipation(ctx context.Context, createParticipation database.CreateParticipation) (*database.Participation, error)
 	GetParticipations(ctx context.Context, filter database.GetParticipationsFilter) ([]database.Participation, error)
 }
 
@@ -23,13 +24,27 @@ func NewParticipationRepository(db *sqlx.DB) ParticipationRepository {
 	}
 }
 
-func (r *participationRepository) CreateParticipation(ctx context.Context, createParticipation database.CreateParticipation) error {
-	_, err := r.db.NamedExecContext(ctx, `
+func (r *participationRepository) CreateParticipation(ctx context.Context, createParticipation database.CreateParticipation) (*database.Participation, error) {
+	res, err := r.db.NamedQueryContext(ctx, `
 		INSERT INTO participation (participation_method_id, user_id, fields)
 		VALUES (:participation_method_id, :user_id, :fields)
+		RETURNING *
 	`, createParticipation)
+	if err != nil {
+		return nil, err
+	}
 
-	return err
+	if !res.Next() {
+		return nil, errors.New("participation not found after creating")
+	}
+
+	var participation database.Participation
+	err = res.StructScan(&participation)
+	if err != nil {
+		return nil, err
+	}
+
+	return &participation, nil
 }
 
 func (r *participationRepository) GetParticipations(ctx context.Context, filter database.GetParticipationsFilter) ([]database.Participation, error) {

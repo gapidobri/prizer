@@ -24,21 +24,34 @@ func NewPrizeRepository(db *sqlx.DB) PrizeRepository {
 
 func (p *prizeRepository) GetPrizes(ctx context.Context, filter database.GetPrizesFilter) ([]database.Prize, error) {
 	query := sq.
-		Select("*").
-		From("prize")
+		Select("p.*").
+		From("prize p")
 
 	if filter.GameId != nil {
-		query.Where("game_id = ?", filter.GameId)
+		query = query.Where("game_id = ?", filter.GameId)
+	}
+	if filter.DrawMethodId != nil {
+		query = query.
+			LeftJoin("draw_method_prize USING (prize_id)").
+			Where("draw_method_id = ?", filter.DrawMethodId)
 	}
 	if filter.AvailableOnly {
-		subQuery, subArgs := sq.
+		subQuery := sq.
 			Select("COUNT(*)").
 			From("won_prize wp").
-			InnerJoin("prize p USING (prize_id)").
-			PlaceholderFormat(sq.Dollar).
-			MustSql()
+			InnerJoin("draw_method_prize USING (prize_id)").
+			Where("wp.prize_id = p.prize_id")
 
-		query = query.Where(fmt.Sprintf("count > (%s)", subQuery), subArgs...)
+		if filter.DrawMethodId != nil {
+			subQuery = subQuery.Where("draw_method_id = ?", filter.DrawMethodId)
+		}
+
+		sql, args, err := subQuery.ToSql()
+		if err != nil {
+			return nil, err
+		}
+
+		query = query.Where(fmt.Sprintf("p.count > (%s)", sql), args...)
 	}
 
 	sql, args, err := query.PlaceholderFormat(sq.Dollar).ToSql()
