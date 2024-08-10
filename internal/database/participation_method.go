@@ -27,7 +27,7 @@ func (c *participationMethodRepository) GetParticipationMethod(ctx context.Conte
 	var participationMethod database.ParticipationMethod
 	err := c.db.GetContext(ctx, &participationMethod, `
 		SELECT *
-		FROM participation_method
+		FROM participation_methods
 		WHERE participation_method_id = $1
 	`, participationMethodId)
 	switch {

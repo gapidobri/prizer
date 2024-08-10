@@ -7,5 +7,5 @@ type ParticipationRequest struct {
 
 // swagger:model ParticipationResponse
 type ParticipationResponse struct {
-	Prizes []Prize `json:"prizes"`
+	Prizes []PublicPrize `json:"prizes"`
 }

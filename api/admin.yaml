@@ -18,6 +18,14 @@ definitions:
         type: object
     GetGameResponse:
         $ref: '#/definitions/Game'
+    GetPrizesResponse:
+        items:
+            $ref: '#/definitions/Prize'
+        type: array
+    GetUsersResponse:
+        items:
+            $ref: '#/definitions/User'
+        type: array
     ParticipationRequest:
         properties:
             fields:
@@ -28,23 +36,53 @@ definitions:
         properties:
             prizes:
                 items:
-                    $ref: '#/definitions/Prize'
+                    $ref: '#/definitions/PublicPrize'
                 type: array
         type: object
     Prize:
+        properties:
+            count:
+                format: int64
+                type: integer
+            description:
+                type: string
+            gameId:
+                type: string
+            id:
+                type: string
+            name:
+                type: string
+        type: object
+    PublicPrize:
         properties:
             description:
                 type: string
             name:
                 type: string
         type: object
-host: localhost:8080
+    User:
+        properties:
+            additional_fields:
+                additionalProperties: {}
+                type: object
+            address:
+                type: string
+            email:
+                type: string
+            game_id:
+                type: string
+            id:
+                type: string
+            phone:
+                type: string
+        type: object
+host: localhost:8081
 info:
     description: Backend for prize games
     license:
         name: MIT
         url: https://opensource.org/licenses/MIT
-    title: Prizer
+    title: Prizer Admin API
     version: "1.0"
 paths:
     /games:
@@ -71,6 +109,10 @@ paths:
     /games/{gameId}:
         get:
             operationId: getGame
+            parameters:
+                - in: path
+                  name: gameId
+                  type: string
             responses:
                 "200":
                     description: GetGameResponse
@@ -91,6 +133,77 @@ paths:
             tags:
                 - admin
                 - games
+    /prizes:
+        get:
+            operationId: getPrizes
+            responses:
+                "200":
+                    description: GetPrizesResponse
+                    schema:
+                        $ref: '#/definitions/GetPrizesResponse'
+                "400":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "403":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "500":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+            tags:
+                - admin
+                - prizes
+    /users:
+        get:
+            operationId: getUsers
+            responses:
+                "200":
+                    description: GetUsersResponse
+                    schema:
+                        $ref: '#/definitions/GetUsersResponse'
+                "400":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "403":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "500":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+            tags:
+                - admin
+                - users
+    /users/{userId}:
+        get:
+            operationId: getUser
+            parameters:
+                - in: path
+                  name: userId
+                  type: string
+            responses:
+                "200":
+                    $ref: '#/responses/GetUserResponse'
+                "400":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "403":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "500":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+            tags:
+                - admin
+                - users
 produces:
     - application/json
 schemes:

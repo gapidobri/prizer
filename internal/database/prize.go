@@ -25,21 +25,21 @@ func NewPrizeRepository(db *sqlx.DB) PrizeRepository {
 func (p *prizeRepository) GetPrizes(ctx context.Context, filter database.GetPrizesFilter) ([]database.Prize, error) {
 	query := sq.
 		Select("p.*").
-		From("prize p")
+		From("prizes p")
 
 	if filter.GameId != nil {
 		query = query.Where("game_id = ?", filter.GameId)
 	}
 	if filter.DrawMethodId != nil {
 		query = query.
-			LeftJoin("draw_method_prize USING (prize_id)").
+			LeftJoin("draw_methods_prizes USING (prize_id)").
 			Where("draw_method_id = ?", filter.DrawMethodId)
 	}
 	if filter.AvailableOnly {
 		subQuery := sq.
 			Select("COUNT(*)").
-			From("won_prize wp").
-			InnerJoin("draw_method_prize USING (prize_id)").
+			From("won_prizes wp").
+			InnerJoin("draw_method_prizes USING (prize_id)").
 			Where("wp.prize_id = p.prize_id")
 
 		if filter.DrawMethodId != nil {

@@ -12,6 +12,8 @@ import (
 )
 
 type UserRepository interface {
+	GetUsers(ctx context.Context) ([]database.User, error)
+	GetUser(ctx context.Context, userId string) (*database.User, error)
 	GetUserFromFields(ctx context.Context, gameId string, fields database.UserFields) (*database.User, error)
 	CreateUser(ctx context.Context, user database.CreateUser) (*database.User, error)
 }
@@ -26,10 +28,36 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 	}
 }
 
+func (r *userRepository) GetUsers(ctx context.Context) ([]database.User, error) {
+	var users []database.User
+	err := r.db.SelectContext(ctx, &users, "SELECT * FROM users")
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
+func (r *userRepository) GetUser(ctx context.Context, userId string) (*database.User, error) {
+	var user database.User
+	err := r.db.GetContext(ctx, &user, `
+		SELECT *
+		FROM users
+		WHERE user_id = $1
+	`, userId)
+	switch {
+	case err == nil:
+		return &user, nil
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, er.UserNotFound
+	default:
+		return nil, err
+	}
+}
+
 func (r *userRepository) GetUserFromFields(ctx context.Context, gameId string, fields database.UserFields) (*database.User, error) {
 	query := sq.
 		Select("*").
-		From("public.user").
+		From("users").
 		Where("game_id = ?", gameId)
 
 	hasFilter := false
@@ -71,7 +99,7 @@ func (r *userRepository) GetUserFromFields(ctx context.Context, gameId string, f
 func (r *userRepository) CreateUser(ctx context.Context, create database.CreateUser) (*database.User, error) {
 	query := sq.
 		Select("*").
-		From("public.user").
+		From("users").
 		Where(sq.Eq{"game_id": create.GameId})
 
 	or := sq.Or{}
@@ -105,7 +133,7 @@ func (r *userRepository) CreateUser(ctx context.Context, create database.CreateU
 	}
 
 	_, err = r.db.NamedExecContext(ctx, `
-		INSERT INTO "user" (game_id, email, address, phone, additional_fields)
+		INSERT INTO users (game_id, email, address, phone, additional_fields)
 		VALUES (:game_id, :email, :address, :phone, :additional_fields)
 	`, create)
 	if err != nil {

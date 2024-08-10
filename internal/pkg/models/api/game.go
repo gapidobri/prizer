@@ -21,4 +21,4 @@ func GameFromDB(game dbModels.Game) Game {
 type GetGamesResponse = []Game
 
 // swagger:model GetGameResponse
-type GetGameResponse = Game
+type GetGameResponse = *Game

@@ -11,6 +11,7 @@ import (
 	"github.com/gapidobri/prizer/internal/pkg/models/api"
 	dbModels "github.com/gapidobri/prizer/internal/pkg/models/database"
 	"github.com/gapidobri/prizer/internal/pkg/util"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"math/rand"
 	"net/mail"
@@ -50,7 +51,7 @@ func NewGameService(
 	}
 }
 
-func (s *GameService) GetGames(ctx context.Context) ([]api.Game, error) {
+func (s *GameService) GetGames(ctx context.Context) (api.GetGamesResponse, error) {
 	games, err := s.gameRepository.GetGames(ctx)
 	if err != nil {
 		return nil, err
@@ -63,7 +64,12 @@ func (s *GameService) GetGames(ctx context.Context) ([]api.Game, error) {
 	return apiGames, nil
 }
 
-func (s *GameService) GetGame(ctx context.Context, gameId string) (*api.Game, error) {
+func (s *GameService) GetGame(ctx context.Context, gameId string) (api.GetGameResponse, error) {
+	err := uuid.Validate(gameId)
+	if err != nil {
+		return nil, er.InvalidUuid
+	}
+
 	game, err := s.gameRepository.GetGame(ctx, gameId)
 	if err != nil {
 		return nil, err
@@ -277,12 +283,12 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 		}
 	}
 
-	apiPrizes := lo.Map(wonPrizes, func(prize dbModels.Prize, _ int) api.Prize {
-		return api.PrizeFromDB(prize)
+	publicPrizes := lo.Map(wonPrizes, func(prize dbModels.Prize, _ int) api.PublicPrize {
+		return api.PublicPrizeFromDB(prize)
 	})
 
 	return &api.ParticipationResponse{
-		Prizes: apiPrizes,
+		Prizes: publicPrizes,
 	}, nil
 }
 

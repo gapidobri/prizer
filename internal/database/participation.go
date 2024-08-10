@@ -26,7 +26,7 @@ func NewParticipationRepository(db *sqlx.DB) ParticipationRepository {
 
 func (r *participationRepository) CreateParticipation(ctx context.Context, createParticipation database.CreateParticipation) (*database.Participation, error) {
 	res, err := r.db.NamedQueryContext(ctx, `
-		INSERT INTO participation (participation_method_id, user_id, fields)
+		INSERT INTO participations (participation_method_id, user_id, fields)
 		VALUES (:participation_method_id, :user_id, :fields)
 		RETURNING *
 	`, createParticipation)
@@ -50,7 +50,7 @@ func (r *participationRepository) CreateParticipation(ctx context.Context, creat
 func (r *participationRepository) GetParticipations(ctx context.Context, filter database.GetParticipationsFilter) ([]database.Participation, error) {
 	query := sq.
 		Select("*").
-		From("participation")
+		From("participations")
 
 	if filter.UserId != nil {
 		query = query.Where(sq.Eq{"user_id": filter.UserId})

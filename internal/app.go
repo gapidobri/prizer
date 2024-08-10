@@ -2,12 +2,10 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"github.com/gapidobri/prizer/internal/api/admin"
 	"github.com/gapidobri/prizer/internal/api/public"
 	"github.com/gapidobri/prizer/internal/database"
 	"github.com/gapidobri/prizer/internal/pkg/client/addressvalidation"
-	database2 "github.com/gapidobri/prizer/internal/pkg/models/database"
 	"github.com/gapidobri/prizer/internal/service"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -15,7 +13,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"reflect"
 	"syscall"
 )
 
@@ -43,13 +40,6 @@ func Run() {
 	participationMethodRepository := database.NewParticipationMethodRepository(db)
 	participationRepository := database.NewParticipationRepository(db)
 
-	drawMethods, err := drawMethodRepository.GetDrawMethods(ctx, "83aef006-02cc-4e08-b764-95783180f154", database2.GetDrawMethodsFilter{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(reflect.TypeOf(drawMethods[0].Data))
-
 	// Services
 	gameService := service.NewGameService(
 		gameRepository,
@@ -61,9 +51,11 @@ func Run() {
 		participationRepository,
 		addressValidationClient,
 	)
+	userService := service.NewUserService(userRepository)
+	prizeService := service.NewPrizeService(prizeRepository)
 
 	publicApi := public.NewServer(gameService)
-	adminApi := admin.NewServer(gameService)
+	adminApi := admin.NewServer(gameService, userService, prizeService)
 
 	go publicApi.Run(":8080")
 	go adminApi.Run(":8081")

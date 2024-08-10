@@ -1,6 +1,6 @@
 schema "public" {}
 
-table "game" {
+table "games" {
   schema = schema.public
   column "game_id" {
     type = uuid
@@ -22,7 +22,7 @@ enum "participation_limit" {
   values = ["daily"]
 }
 
-table "participation_method" {
+table "participation_methods" {
   schema = schema.public
   column "participation_method_id" {
     type = uuid
@@ -48,13 +48,13 @@ table "participation_method" {
   }
   foreign_key "game_fk" {
     columns = [column.game_id]
-    ref_columns = [table.game.column.game_id]
+    ref_columns = [table.games.column.game_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
 }
 
-table "participation_method_draw_method" {
+table "participation_methods_draw_methods" {
   schema = schema.public
   column "participation_method_id" {
     type = uuid
@@ -70,13 +70,13 @@ table "participation_method_draw_method" {
   }
   foreign_key "participation_method_fk" {
     columns = [column.participation_method_id]
-    ref_columns = [table.participation_method.column.participation_method_id]
+    ref_columns = [table.participation_methods.column.participation_method_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
   foreign_key "draw_method_fk" {
     columns = [column.draw_method_id]
-    ref_columns = [table.draw_method.column.draw_method_id]
+    ref_columns = [table.draw_methods.column.draw_method_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
@@ -87,7 +87,7 @@ enum "draw_method_enum" {
   values = ["first_n", "chance"]
 }
 
-table "draw_method" {
+table "draw_methods" {
   schema = schema.public
   column "draw_method_id" {
     type = uuid
@@ -110,7 +110,7 @@ table "draw_method" {
   }
 }
 
-table "draw_method_prize" {
+table "draw_methods_prizes" {
   schema = schema.public
   column "draw_method_id" {
     type = uuid
@@ -126,19 +126,19 @@ table "draw_method_prize" {
   }
   foreign_key "draw_method_fk" {
     columns = [column.draw_method_id]
-    ref_columns = [table.draw_method.column.draw_method_id]
+    ref_columns = [table.draw_methods.column.draw_method_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
   foreign_key "prize_fk" {
     columns = [column.prize_id]
-    ref_columns = [table.prize.column.prize_id]
+    ref_columns = [table.prizes.column.prize_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
 }
 
-table "prize" {
+table "prizes" {
   schema = schema.public
   column "prize_id" {
     type = uuid
@@ -165,13 +165,13 @@ table "prize" {
   }
   foreign_key "game_fk" {
     columns = [column.game_id]
-    ref_columns = [table.game.column.game_id]
+    ref_columns = [table.games.column.game_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
 }
 
-table "won_prize" {
+table "won_prizes" {
   schema = schema.public
   column "prize_id" {
     type = uuid
@@ -187,19 +187,19 @@ table "won_prize" {
   }
   foreign_key "prize_fk" {
     columns = [column.prize_id]
-    ref_columns = [table.prize.column.prize_id]
+    ref_columns = [table.prizes.column.prize_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
   foreign_key "participation_fk" {
     columns = [column.participation_id]
-    ref_columns = [table.participation.column.participation_id]
+    ref_columns = [table.participations.column.participation_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
 }
 
-table "user" {
+table "users" {
   schema = schema.public
   column "user_id" {
     type = uuid
@@ -231,13 +231,13 @@ table "user" {
   }
   foreign_key "game_fk" {
     columns = [column.game_id]
-    ref_columns = [table.game.column.game_id]
+    ref_columns = [table.games.column.game_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
 }
 
-table "participation" {
+table "participations" {
   schema = schema.public
   column "participation_id" {
     type = uuid
@@ -270,13 +270,13 @@ table "participation" {
   }
   foreign_key "participation_method_fk" {
     columns = [column.participation_method_id]
-    ref_columns = [table.participation_method.column.participation_method_id]
+    ref_columns = [table.participation_methods.column.participation_method_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
   foreign_key "user_fk" {
     columns = [column.user_id]
-    ref_columns = [table.user.column.user_id]
+    ref_columns = [table.users.column.user_id]
     on_delete = CASCADE
     on_update = CASCADE
   }

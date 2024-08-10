@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	NotFound = errors.New(http.StatusNotFound, "not_found", "Not found")
-
-	BadRequest = errors.New(http.StatusBadRequest, "invalid_body", "Invalid body")
+	NotFound    = errors.New(http.StatusNotFound, "not_found", "Not found")
+	BadRequest  = errors.New(http.StatusBadRequest, "invalid_body", "Invalid body")
+	InvalidUuid = errors.New(http.StatusBadRequest, "invalid_uuid", "Invalid uuid")
 )

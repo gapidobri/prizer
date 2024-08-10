@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Server) gameRoutes() {
-	game := s.engine.Group("/games")
+	gamesGroup := s.engine.Group("/games")
 
 	// swagger:route GET /games admin games getGames
 	//
@@ -16,7 +16,7 @@ func (s *Server) gameRoutes() {
 	//   403: ErrorResponse
 	//   500: ErrorResponse
 	//
-	game.GET("", func(c *gin.Context) {
+	gamesGroup.GET("", func(c *gin.Context) {
 		response, err := s.gameService.GetGames(c.Request.Context())
 		if err != nil {
 			_ = c.Error(err)
@@ -28,14 +28,19 @@ func (s *Server) gameRoutes() {
 
 	// swagger:route GET /games/{gameId} admin games getGame
 	//
+	// parameters:
+	//   + name: gameId
+	//     in: path
+	//     type: string
+	//
 	// responses:
 	//   200: GetGameResponse
 	//   400: ErrorResponse
 	//   403: ErrorResponse
 	//   500: ErrorResponse
 	//
-	game.GET("", func(c *gin.Context) {
-		response, err := s.gameService.GetGames(c.Request.Context())
+	gamesGroup.GET(":gameId", func(c *gin.Context) {
+		response, err := s.gameService.GetGame(c.Request.Context(), c.Param("gameId"))
 		if err != nil {
 			_ = c.Error(err)
 			return

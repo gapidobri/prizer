@@ -1,4 +1,4 @@
-//	 Prizer
+//	 Prizer Public API
 //
 //	 Backend for prize games
 //
@@ -16,4 +16,4 @@
 //		  - application/json
 //
 // swagger:meta
-package api
+package public
