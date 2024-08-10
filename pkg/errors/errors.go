@@ -76,3 +76,8 @@ func (e ApiError) New(code string, message string) ApiError {
 	err.err = e
 	return err
 }
+
+func (e ApiError) With(message string) ApiError {
+	e.message = message
+	return e
+}

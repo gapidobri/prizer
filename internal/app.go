@@ -39,8 +39,9 @@ func Run() {
 	prizeRepository := database.NewPrizeRepository(db)
 	wonPrizeRepository := database.NewWonPrizeRepository(db)
 	drawMethodRepository := database.NewDrawMethodRepository(db)
-	collaboratorRepository := database.NewCollaboratorRepository(db)
-	collaborationRepository := database.NewCollaborationRepository(db)
+	userRepository := database.NewUserRepository(db)
+	participationMethodRepository := database.NewParticipationMethodRepository(db)
+	participationRepository := database.NewParticipationRepository(db)
 
 	drawMethods, err := drawMethodRepository.GetDrawMethods(ctx, "83aef006-02cc-4e08-b764-95783180f154", database2.GetDrawMethodsFilter{})
 	if err != nil {
@@ -54,9 +55,10 @@ func Run() {
 		gameRepository,
 		prizeRepository,
 		wonPrizeRepository,
-		collaboratorRepository,
+		userRepository,
 		drawMethodRepository,
-		collaborationRepository,
+		participationMethodRepository,
+		participationRepository,
 		addressValidationClient,
 	)
 

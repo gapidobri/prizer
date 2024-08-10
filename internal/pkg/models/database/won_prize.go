@@ -1,6 +1,6 @@
 package database
 
 type CreateWonPrize struct {
-	PrizeId        string `db:"prize_id"`
-	CollaboratorId string `db:"collaborator_id"`
+	PrizeId string `db:"prize_id"`
+	UserId  string `db:"user_id"`
 }

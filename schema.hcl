@@ -10,13 +10,6 @@ table "game" {
     type = varchar
     null = false
   }
-  column "win_percentage" {
-    type = float
-    null = false
-  }
-  column "unique_collaborator_data" {
-    type = boolean
-  }
   primary_key {
     columns = [
       column.game_id
@@ -24,9 +17,14 @@ table "game" {
   }
 }
 
-table "collaboration_method" {
+enum "participation_limit" {
   schema = schema.public
-  column "collaboration_method_id" {
+  values = ["daily"]
+}
+
+table "participation_method" {
+  schema = schema.public
+  column "participation_method_id" {
     type = uuid
     default = sql("gen_random_uuid()")
   }
@@ -35,14 +33,17 @@ table "collaboration_method" {
   }
   column "name" {
     type = varchar
-    default = "Collaboration method"
+  }
+  column "limit" {
+    type = enum.participation_limit
+    null = true
   }
   column "fields" {
     type = json
   }
   primary_key {
     columns = [
-      column.collaboration_method_id
+      column.participation_method_id
     ]
   }
   foreign_key "game_fk" {
@@ -53,9 +54,9 @@ table "collaboration_method" {
   }
 }
 
-table "collaboration_method_draw_method" {
+table "participation_method_draw_method" {
   schema = schema.public
-  column "collaboration_method_id" {
+  column "participation_method_id" {
     type = uuid
   }
   column "draw_method_id" {
@@ -63,13 +64,13 @@ table "collaboration_method_draw_method" {
   }
   primary_key {
     columns = [
-      column.collaboration_method_id,
+      column.participation_method_id,
       column.draw_method_id
     ]
   }
-  foreign_key "collaboration_method_fk" {
-    columns = [column.collaboration_method_id]
-    ref_columns = [table.collaboration_method.column.collaboration_method_id]
+  foreign_key "participation_method_fk" {
+    columns = [column.participation_method_id]
+    ref_columns = [table.participation_method.column.participation_method_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
@@ -179,7 +180,7 @@ table "won_prize" {
   column "prize_id" {
     type = uuid
   }
-  column "collaborator_id" {
+  column "user_id" {
     type = uuid
   }
   column "created_at" {
@@ -197,38 +198,42 @@ table "won_prize" {
     on_delete = CASCADE
     on_update = CASCADE
   }
-  foreign_key "collaborator_fk" {
-    columns = [column.collaborator_id]
-    ref_columns = [table.collaborator.column.collaborator_id]
+  foreign_key "user_fk" {
+    columns = [column.user_id]
+    ref_columns = [table.user.column.user_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
 }
 
-table "collaborator" {
+table "user" {
   schema = schema.public
-  column "collaborator_id" {
+  column "user_id" {
     type = uuid
     default = sql("gen_random_uuid()")
   }
   column "email" {
     type = varchar
-    null = false
+    null = true
   }
   column "address" {
     type = varchar
     null = true
   }
+  column "phone" {
+    type = varchar
+    null = true
+  }
+  column "additional_fields" {
+    type = json
+  }
   column "game_id" {
     type = uuid
     null = false
   }
-  unique "email_game_id" {
-    columns = [column.email, column.game_id]
-  }
   primary_key {
     columns = [
-      column.collaborator_id
+      column.user_id
     ]
   }
   foreign_key "game_fk" {
@@ -239,33 +244,37 @@ table "collaborator" {
   }
 }
 
-table "collaboration" {
+table "participation" {
   schema = schema.public
-  column "collaboration_method_id" {
+  column "participation_method_id" {
     type = uuid
   }
-  column "collaborator_id" {
+  column "user_id" {
     type = uuid
   }
   column "created_at" {
     type = timestamp
     default = sql("now()")
   }
+  column "fields" {
+    type = json
+  }
   primary_key {
     columns = [
-      column.collaboration_method_id,
-      column.collaborator_id
+      column.participation_method_id,
+      column.user_id,
+      column.created_at,
     ]
   }
-  foreign_key "collaboration_method_fk" {
-    columns = [column.collaboration_method_id]
-    ref_columns = [table.collaboration_method.column.collaboration_method_id]
+  foreign_key "participation_method_fk" {
+    columns = [column.participation_method_id]
+    ref_columns = [table.participation_method.column.participation_method_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
-  foreign_key "collaborator_fk" {
-    columns = [column.collaborator_id]
-    ref_columns = [table.collaborator.column.collaborator_id]
+  foreign_key "user_fk" {
+    columns = [column.user_id]
+    ref_columns = [table.user.column.user_id]
     on_delete = CASCADE
     on_update = CASCADE
   }

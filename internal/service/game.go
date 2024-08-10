@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gapidobri/prizer/internal/database"
 	"github.com/gapidobri/prizer/internal/pkg/client/addressvalidation"
 	er "github.com/gapidobri/prizer/internal/pkg/errors"
@@ -13,6 +13,7 @@ import (
 	"github.com/gapidobri/prizer/internal/pkg/util"
 	"github.com/samber/lo"
 	"math/rand"
+	"net/mail"
 	"time"
 )
 
@@ -20,10 +21,10 @@ type GameService struct {
 	gameRepository                database.GameRepository
 	prizeRepository               database.PrizeRepository
 	wonPrizeRepository            database.WonPrizeRepository
-	collaboratorRepository        database.CollaboratorRepository
+	userRepository                database.UserRepository
 	drawMethodRepository          database.DrawMethodRepository
-	collaborationMethodRepository database.CollaborationMethodRepository
-	collaborationRepository       database.CollaborationRepository
+	participationMethodRepository database.ParticipationMethodRepository
+	participationRepository       database.ParticipationRepository
 	addressValidationClient       *addressvalidation.Client
 }
 
@@ -31,26 +32,26 @@ func NewGameService(
 	gameRepository database.GameRepository,
 	prizeRepository database.PrizeRepository,
 	wonPrizeRepository database.WonPrizeRepository,
-	collaboratorRepository database.CollaboratorRepository,
+	userRepository database.UserRepository,
 	drawMethodRepository database.DrawMethodRepository,
-	collaborationMethodRepository database.CollaborationMethodRepository,
-	collaborationRepository database.CollaborationRepository,
+	participationMethodRepository database.ParticipationMethodRepository,
+	participationRepository database.ParticipationRepository,
 	addressValidationClient *addressvalidation.Client,
 ) *GameService {
 	return &GameService{
 		gameRepository:                gameRepository,
 		prizeRepository:               prizeRepository,
 		wonPrizeRepository:            wonPrizeRepository,
-		collaboratorRepository:        collaboratorRepository,
+		userRepository:                userRepository,
 		drawMethodRepository:          drawMethodRepository,
-		collaborationMethodRepository: collaborationMethodRepository,
-		collaborationRepository:       collaborationRepository,
+		participationMethodRepository: participationMethodRepository,
+		participationRepository:       participationRepository,
 		addressValidationClient:       addressValidationClient,
 	}
 }
 
-func (g *GameService) GetGames(ctx context.Context) ([]api.Game, error) {
-	games, err := g.gameRepository.GetGames(ctx)
+func (s *GameService) GetGames(ctx context.Context) ([]api.Game, error) {
+	games, err := s.gameRepository.GetGames(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +63,8 @@ func (g *GameService) GetGames(ctx context.Context) ([]api.Game, error) {
 	return apiGames, nil
 }
 
-func (g *GameService) GetGame(ctx context.Context, gameId string) (*api.Game, error) {
-	game, err := g.gameRepository.GetGame(ctx, gameId)
+func (s *GameService) GetGame(ctx context.Context, gameId string) (*api.Game, error) {
+	game, err := s.gameRepository.GetGame(ctx, gameId)
 	if err != nil {
 		return nil, err
 	}
@@ -73,27 +74,103 @@ func (g *GameService) GetGame(ctx context.Context, gameId string) (*api.Game, er
 	return &apiGame, nil
 }
 
-func (g *GameService) Roll(ctx context.Context, collaborationMethodId string, roll api.RollRequest) (*api.RollResponse, error) {
-	collaborationMethod, err := g.collaborationMethodRepository.GetCollaborationMethod(ctx, collaborationMethodId)
+func (s *GameService) Participate(ctx context.Context, participationMethodId string, roll api.ParticipationRequest) (*api.ParticipationResponse, error) {
+	participationMethod, err := s.participationMethodRepository.GetParticipationMethod(ctx, participationMethodId)
 	if err != nil {
 		return nil, err
 	}
 
-	normalizedAddress, err := g.addressValidationClient.NormalizeAddress(ctx, roll.Address)
-	if err != nil {
-		return nil, err
+	gameId := participationMethod.GameId
+
+	// Sanitize and validate incoming data
+	additionalUserFields := dbModels.JsonMap{}
+	var (
+		userFields   dbModels.UserFields
+		uniqueFields dbModels.UserFields
+	)
+	for key, field := range participationMethod.Fields.User {
+		value, exists := roll.Fields[key]
+		if !exists {
+			if field.Unique || field.Required {
+				return nil, er.BadRequest.With(fmt.Sprintf("Field %s is required", key))
+			}
+			continue
+		}
+
+		switch key {
+		case "email":
+			str, ok := value.(string)
+			if !ok {
+				return nil, er.BadRequest.With(fmt.Sprintf("Field %s is not a string", key))
+			}
+			email, err := mail.ParseAddress(str)
+			if err != nil {
+				return nil, er.InvalidEmail
+			}
+
+			userFields.Email = &email.Address
+			if field.Unique {
+				uniqueFields.Email = &email.Address
+			}
+			continue
+
+		case "address":
+			str, ok := value.(string)
+			if !ok {
+				return nil, er.BadRequest.With(fmt.Sprintf("Field %s is not a string", key))
+			}
+
+			address, err := s.addressValidationClient.NormalizeAddress(ctx, str)
+			if err != nil {
+				return nil, err
+			}
+
+			userFields.Address = &address
+			if field.Unique {
+				uniqueFields.Address = &address
+			}
+			continue
+		}
+
+		value, err = s.validateField(field, key, value)
+		if err != nil {
+			return nil, err
+		}
+		additionalUserFields[key] = value
 	}
 
-	collaborator, err := g.collaboratorRepository.GetCollaboratorFromEmailAndAddress(ctx, collaborationMethod.GameId, roll.Email, normalizedAddress)
+	participationFields := dbModels.JsonMap{}
+	uniqueParticipationFields := dbModels.JsonMap{}
+	for key, field := range participationMethod.Fields.Participation {
+		value, exists := roll.Fields[key]
+		if !exists {
+			if field.Unique || field.Required {
+				return nil, er.BadRequest.With(fmt.Sprintf("Field %s is required", key))
+			}
+			continue
+		}
+
+		value, err = s.validateField(field, key, value)
+		if err != nil {
+			return nil, err
+		}
+		participationFields[key] = value
+		if field.Unique {
+			uniqueParticipationFields[key] = value
+		}
+	}
+
+	// Get / create user
+	user, err := s.userRepository.GetUserFromFields(ctx, gameId, uniqueFields)
 	switch {
 	case err == nil:
 		break
-	case errors.Is(err, sql.ErrNoRows):
-		collaborator, err = g.collaboratorRepository.CreateCollaborator(ctx, dbModels.CreateCollaborator{
-			GameId:  collaborationMethod.GameId,
-			Email:   roll.Email,
-			Address: &normalizedAddress,
-		}, false)
+	case errors.Is(err, er.UserNotFound):
+		user, err = s.userRepository.CreateUser(ctx, dbModels.CreateUser{
+			GameId:           gameId,
+			UserFields:       userFields,
+			AdditionalFields: additionalUserFields,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -101,26 +178,39 @@ func (g *GameService) Roll(ctx context.Context, collaborationMethodId string, ro
 		return nil, err
 	}
 
-	if collaborator.LastRollTime != nil &&
-		!util.StripTime(*collaborator.LastRollTime).Before(util.StripTime(time.Now())) {
-		return nil, er.AlreadyRolled
-	}
-
-	loose := func() (*api.RollResponse, error) {
-		err := g.collaboratorRepository.UpdateLastRollTime(ctx, collaborator.Id, time.Now())
-		if err != nil {
-			return nil, err
+	// Check if user can participate
+	if participationMethod.Limit != nil {
+		switch *participationMethod.Limit {
+		case dbModels.ParticipationLimitDaily:
+			participations, err := s.participationRepository.GetParticipations(ctx, dbModels.GetParticipationsFilter{
+				UserId: &user.Id,
+				From:   lo.ToPtr(util.StripTime(time.Now())),
+				To:     lo.ToPtr(time.Now()),
+			})
+			if err != nil {
+				return nil, err
+			}
+			if len(participations) != 0 {
+				return nil, er.AlreadyParticipated
+			}
 		}
-		return &api.RollResponse{Won: false}, nil
 	}
 
-	err = g.collaboratorRepository.UpdateLastRollTime(ctx, collaborator.Id, time.Now())
+	// Check participation unique fields
+	participations, err := s.participationRepository.GetParticipations(ctx, dbModels.GetParticipationsFilter{
+		UserId: &user.Id,
+		Fields: &uniqueParticipationFields,
+	})
 	if err != nil {
 		return nil, err
 	}
+	if len(participations) != 0 {
+		return nil, er.ParticipationDataExists
+	}
 
-	drawMethods, err := g.drawMethodRepository.GetDrawMethods(ctx, collaborationMethod.GameId, dbModels.GetDrawMethodsFilter{
-		CollaborationMethodId: &collaborationMethodId,
+	// Participate in all draw methods
+	drawMethods, err := s.drawMethodRepository.GetDrawMethods(ctx, gameId, dbModels.GetDrawMethodsFilter{
+		ParticipationMethodId: &participationMethodId,
 	})
 	if err != nil {
 		return nil, err
@@ -130,7 +220,7 @@ func (g *GameService) Roll(ctx context.Context, collaborationMethodId string, ro
 
 	for _, drawMethod := range drawMethods {
 		var prizes []dbModels.Prize
-		prizes, err = g.prizeRepository.GetPrizes(ctx, dbModels.GetPrizesFilter{
+		prizes, err = s.prizeRepository.GetPrizes(ctx, dbModels.GetPrizesFilter{
 			DrawMethodId:  &drawMethod.Id,
 			AvailableOnly: true,
 		})
@@ -163,26 +253,51 @@ func (g *GameService) Roll(ctx context.Context, collaborationMethodId string, ro
 		}
 	}
 
-	if len(wonPrizes) == 0 {
-		return loose()
-	}
-
 	for _, prize := range wonPrizes {
-		err = g.wonPrizeRepository.CreateWonPrize(ctx, dbModels.CreateWonPrize{
-			PrizeId:        prize.Id,
-			CollaboratorId: collaborator.Id,
+		err = s.wonPrizeRepository.CreateWonPrize(ctx, dbModels.CreateWonPrize{
+			PrizeId: prize.Id,
+			UserId:  user.Id,
 		})
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	err = s.participationRepository.CreateParticipation(ctx, dbModels.CreateParticipation{
+		ParticipationMethodId: participationMethodId,
+		UserId:                user.Id,
+		Fields:                participationFields,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	apiPrizes := lo.Map(wonPrizes, func(prize dbModels.Prize, _ int) api.Prize {
 		return api.PrizeFromDB(prize)
 	})
 
-	return &api.RollResponse{
-		Won:    true,
+	return &api.ParticipationResponse{
 		Prizes: apiPrizes,
 	}, nil
+}
+
+func (s *GameService) validateField(field dbModels.Field, key string, value any) (any, error) {
+	switch field.Type {
+	case dbModels.FieldTypeBool:
+		val, ok := value.(bool)
+		if !ok {
+			return nil, er.BadRequest.With(fmt.Sprintf("Field %s is not a bool", key))
+		}
+		return val, nil
+
+	case dbModels.FieldTypeString:
+		val, ok := value.(string)
+		if !ok {
+			return nil, er.BadRequest.With(fmt.Sprintf("Field %s is not a string", key))
+		}
+		return val, nil
+
+	default:
+		return nil, er.BadRequest.With(fmt.Sprintf("Field %s is not a valid field", key))
+	}
 }

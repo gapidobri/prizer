@@ -23,5 +23,5 @@ type DrawMethodFirstNData struct {
 }
 
 type GetDrawMethodsFilter struct {
-	CollaborationMethodId *string
+	ParticipationMethodId *string
 }

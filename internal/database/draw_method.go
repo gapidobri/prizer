@@ -24,13 +24,13 @@ func NewDrawMethodRepository(db *sqlx.DB) DrawMethodRepository {
 func (d *drawMethodRepository) GetDrawMethods(ctx context.Context, gameId string, filter database.GetDrawMethodsFilter) ([]database.DrawMethod, error) {
 	query := sq.
 		Select("DISTINCT ON (draw_method_id) dm.*").
-		From("collaboration_method").
-		InnerJoin("collaboration_method_draw_method USING (collaboration_method_id)").
+		From("participation_method").
+		InnerJoin("participation_method_draw_method USING (participation_method_id)").
 		InnerJoin("draw_method dm USING (draw_method_id)").
 		Where("game_id = ?", gameId)
 
-	if filter.CollaborationMethodId != nil {
-		query = query.Where("collaboration_method_id = ?", filter.CollaborationMethodId)
+	if filter.ParticipationMethodId != nil {
+		query = query.Where("participation_method_id = ?", filter.ParticipationMethodId)
 	}
 
 	sql, args := query.

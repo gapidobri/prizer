@@ -3,25 +3,19 @@ package database
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"github.com/pkg/errors"
 )
 
-type JsonColumn[T any] struct {
-	v *T
-}
+type JsonMap map[string]any
 
-func (j *JsonColumn[T]) Scan(source any) error {
-	if source == nil {
-		j.v = nil
-		return nil
+func (f JsonMap) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
 	}
-	j.v = new(T)
-	return json.Unmarshal(source.([]byte), j.v)
+	return json.Unmarshal(b, &f)
 }
 
-func (j *JsonColumn[T]) Value() (driver.Value, error) {
-	return json.Marshal(j.v)
-}
-
-func (j *JsonColumn[T]) Get() *T {
-	return j.v
+func (f JsonMap) Value() (driver.Value, error) {
+	return json.Marshal(f)
 }

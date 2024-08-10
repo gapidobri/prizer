@@ -41,10 +41,13 @@ func (p *prizeRepository) GetPrizes(ctx context.Context, filter database.GetPriz
 		query = query.Where(fmt.Sprintf("count > (%s)", subQuery), subArgs...)
 	}
 
-	sql, args := query.MustSql()
+	sql, args, err := query.PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return nil, err
+	}
 
 	var prizes []database.Prize
-	err := p.db.SelectContext(ctx, &prizes, sql, args...)
+	err = p.db.SelectContext(ctx, &prizes, sql, args...)
 	if err != nil {
 		return nil, err
 	}

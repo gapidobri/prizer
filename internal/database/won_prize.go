@@ -28,18 +28,9 @@ func (w *wonPrizeRepository) CreateWonPrize(ctx context.Context, wonPrize databa
 	defer tx.Rollback()
 
 	_, err = tx.NamedExecContext(ctx, `
-		INSERT INTO won_prize (prize_id, collaborator_id)
-		VALUES (:prize_id, :collaborator_id)
+		INSERT INTO won_prize (prize_id, user_id)
+		VALUES (:prize_id, :user_id)
 	`, wonPrize)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.ExecContext(ctx, `
-		UPDATE collaborator
-		SET last_roll_time = current_timestamp
-		WHERE collaborator_id = $1
-	`, wonPrize.CollaboratorId)
 	if err != nil {
 		return err
 	}
