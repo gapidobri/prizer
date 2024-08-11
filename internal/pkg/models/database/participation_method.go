@@ -8,11 +8,11 @@ import (
 )
 
 type ParticipationMethod struct {
-	Id     string                    `db:"participation_method_id"`
-	GameId string                    `db:"game_id"`
-	Name   string                    `db:"name"`
-	Limit  *enums.ParticipationLimit `db:"limit"`
-	Fields FieldConfig               `db:"fields"`
+	Id     string                   `db:"participation_method_id"`
+	GameId string                   `db:"game_id"`
+	Name   string                   `db:"name"`
+	Limit  enums.ParticipationLimit `db:"limit"`
+	Fields FieldConfig              `db:"fields"`
 }
 
 type FieldConfig struct {

@@ -19,7 +19,7 @@ table "games" {
 
 enum "participation_limit" {
   schema = schema.public
-  values = ["daily"]
+  values = ["none", "daily"]
 }
 
 table "participation_methods" {
@@ -36,7 +36,7 @@ table "participation_methods" {
   }
   column "limit" {
     type = enum.participation_limit
-    null = true
+    default = "none"
   }
   column "fields" {
     type = json

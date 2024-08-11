@@ -12,6 +12,36 @@ definitions:
             - error
             - code
         type: object
+    Field:
+        properties:
+            required:
+                type: boolean
+            type:
+                enum:
+                    - string
+                    - bool
+                type: string
+            unique:
+                type: boolean
+        required:
+            - type
+            - required
+            - unique
+        type: object
+    FieldConfig:
+        properties:
+            participation:
+                additionalProperties:
+                    $ref: '#/definitions/Field'
+                type: object
+            user:
+                additionalProperties:
+                    $ref: '#/definitions/Field'
+                type: object
+        required:
+            - user
+            - participation
+        type: object
     Game:
         properties:
             id:
@@ -27,6 +57,10 @@ definitions:
     GetGamesResponse:
         items:
             $ref: '#/definitions/Game'
+        type: array
+    GetParticipationMethodsResponse:
+        items:
+            $ref: '#/definitions/ParticipationMethod'
         type: array
     GetPrizesResponse:
         items:
@@ -59,6 +93,28 @@ definitions:
             - participation_method_id
             - user_id
             - created_at
+            - fields
+        type: object
+    ParticipationMethod:
+        properties:
+            fields:
+                $ref: '#/definitions/FieldConfig'
+            game_id:
+                type: string
+            id:
+                type: string
+            limit:
+                enum:
+                    - none
+                    - daily
+                type: string
+            name:
+                type: string
+        required:
+            - id
+            - game_id
+            - name
+            - limit
             - fields
         type: object
     ParticipationRequest:
@@ -204,6 +260,33 @@ paths:
             tags:
                 - admin
                 - games
+    /participation-methods:
+        get:
+            operationId: getParticipationMethods
+            parameters:
+                - in: query
+                  name: gameId
+                  type: string
+            responses:
+                "200":
+                    description: GetParticipationMethodsResponse
+                    schema:
+                        $ref: '#/definitions/GetParticipationMethodsResponse'
+                "400":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "403":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "500":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+            tags:
+                - admin
+                - participationMethods
     /prizes:
         get:
             operationId: getPrizes

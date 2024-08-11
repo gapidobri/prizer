@@ -35,6 +35,7 @@ func (s *Server) userRoutes() {
 			_ = c.Error(err)
 			return
 		}
+
 		c.JSON(http.StatusOK, users)
 	})
 

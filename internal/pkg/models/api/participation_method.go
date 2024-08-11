@@ -1,7 +1,9 @@
 package api
 
 import (
+	dbModels "github.com/gapidobri/prizer/internal/pkg/models/database"
 	"github.com/gapidobri/prizer/internal/pkg/models/enums"
+	"github.com/samber/lo"
 )
 
 // swagger:model ParticipationRequest
@@ -28,10 +30,20 @@ type ParticipationMethod struct {
 	Name string `json:"name"`
 
 	// required: true
-	Limit *enums.ParticipationLimit `json:"limit"`
+	Limit enums.ParticipationLimit `json:"limit"`
 
 	// required: true
 	Fields FieldConfig `json:"fields"`
+}
+
+func ParticipationMethodFromDB(method dbModels.ParticipationMethod) ParticipationMethod {
+	return ParticipationMethod{
+		Id:     method.Id,
+		GameId: method.GameId,
+		Name:   method.Name,
+		Limit:  method.Limit,
+		Fields: FieldConfigFromDB(method.Fields),
+	}
 }
 
 type FieldConfig struct {
@@ -40,6 +52,17 @@ type FieldConfig struct {
 
 	// required: true
 	Participation map[string]Field `json:"participation"`
+}
+
+func FieldConfigFromDB(config dbModels.FieldConfig) FieldConfig {
+	return FieldConfig{
+		User: lo.MapValues(config.User, func(field dbModels.Field, key string) Field {
+			return FieldFromDB(field)
+		}),
+		Participation: lo.MapValues(config.Participation, func(field dbModels.Field, key string) Field {
+			return FieldFromDB(field)
+		}),
+	}
 }
 
 type Field struct {
@@ -53,8 +76,22 @@ type Field struct {
 	Unique bool `json:"unique"`
 }
 
+func FieldFromDB(field dbModels.Field) Field {
+	return Field{
+		Type:     field.Type,
+		Required: field.Required,
+		Unique:   field.Unique,
+	}
+}
+
 type GetParticipationMethodsFilter struct {
 	GameId *string `form:"gameId" binding:"omitnil,uuid"`
+}
+
+func (f GetParticipationMethodsFilter) ToDB() dbModels.GetParticipationMethodsFilter {
+	return dbModels.GetParticipationMethodsFilter{
+		GameId: f.GameId,
+	}
 }
 
 // swagger:model GetParticipationMethodsResponse

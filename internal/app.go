@@ -54,9 +54,16 @@ func Run() {
 	userService := service.NewUserService(userRepository)
 	prizeService := service.NewPrizeService(prizeRepository)
 	wonPrizeService := service.NewWonPrizeService(wonPrizeRepository)
+	participationMethodService := service.NewParticipationMethodService(participationMethodRepository)
 
 	publicApi := public.NewServer(gameService)
-	adminApi := admin.NewServer(gameService, userService, prizeService, wonPrizeService)
+	adminApi := admin.NewServer(
+		gameService,
+		userService,
+		prizeService,
+		wonPrizeService,
+		participationMethodService,
+	)
 
 	go publicApi.Run(":8080")
 	go adminApi.Run(":8081")

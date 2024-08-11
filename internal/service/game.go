@@ -10,6 +10,7 @@ import (
 	er "github.com/gapidobri/prizer/internal/pkg/errors"
 	"github.com/gapidobri/prizer/internal/pkg/models/api"
 	dbModels "github.com/gapidobri/prizer/internal/pkg/models/database"
+	"github.com/gapidobri/prizer/internal/pkg/models/enums"
 	"github.com/gapidobri/prizer/internal/pkg/util"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -185,21 +186,21 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 	}
 
 	// Check if user can participate
-	if participationMethod.Limit != nil {
-		switch *participationMethod.Limit {
-		case dbModels.ParticipationLimitDaily:
-			participations, err := s.participationRepository.GetParticipations(ctx, dbModels.GetParticipationsFilter{
-				UserId:                &user.Id,
-				ParticipationMethodId: &participationMethod.Id,
-				From:                  lo.ToPtr(util.StripTime(time.Now())),
-				To:                    lo.ToPtr(time.Now()),
-			})
-			if err != nil {
-				return nil, err
-			}
-			if len(participations) != 0 {
-				return nil, er.AlreadyParticipated
-			}
+	switch participationMethod.Limit {
+	case enums.ParticipationLimitNone:
+		break
+	case enums.ParticipationLimitDaily:
+		participations, err := s.participationRepository.GetParticipations(ctx, dbModels.GetParticipationsFilter{
+			UserId:                &user.Id,
+			ParticipationMethodId: &participationMethod.Id,
+			From:                  lo.ToPtr(util.StripTime(time.Now())),
+			To:                    lo.ToPtr(time.Now()),
+		})
+		if err != nil {
+			return nil, err
+		}
+		if len(participations) != 0 {
+			return nil, er.AlreadyParticipated
 		}
 	}
 
@@ -294,14 +295,14 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 
 func (s *GameService) validateField(field dbModels.Field, key string, value any) (any, error) {
 	switch field.Type {
-	case dbModels.FieldTypeBool:
+	case enums.FieldTypeBool:
 		val, ok := value.(bool)
 		if !ok {
 			return nil, er.BadRequest.With(fmt.Sprintf("Field %s is not a bool", key))
 		}
 		return val, nil
 
-	case dbModels.FieldTypeString:
+	case enums.FieldTypeString:
 		val, ok := value.(string)
 		if !ok {
 			return nil, er.BadRequest.With(fmt.Sprintf("Field %s is not a string", key))

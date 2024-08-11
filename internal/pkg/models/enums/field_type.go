@@ -1,5 +1,6 @@
 package enums
 
+// swagger:enum FieldType
 type FieldType string
 
 const (
