@@ -3,7 +3,10 @@ package api
 import dbModels "github.com/gapidobri/prizer/internal/pkg/models/database"
 
 type PublicPrize struct {
-	Name        string `json:"name"`
+	// required: true
+	Name string `json:"name"`
+
+	// required: true
 	Description string `json:"description"`
 }
 
@@ -14,12 +17,22 @@ func PublicPrizeFromDB(prize dbModels.Prize) PublicPrize {
 	}
 }
 
+// swagger:model Prize
 type Prize struct {
-	Id          string `json:"id"`
-	GameId      string `json:"gameId"`
-	Name        string `json:"name"`
+	// required: true
+	Id string `json:"id"`
+
+	// required: true
+	GameId string `json:"gameId"`
+
+	// required: true
+	Name string `json:"name"`
+
+	// required: true
 	Description string `json:"description"`
-	Count       int    `json:"count"`
+
+	// required: true
+	Count int `json:"count"`
 }
 
 func PrizeFromDB(prize dbModels.Prize) Prize {
@@ -34,3 +47,13 @@ func PrizeFromDB(prize dbModels.Prize) Prize {
 
 // swagger:model GetPrizesResponse
 type GetPrizesResponse []Prize
+
+type GetPrizesFilter struct {
+	GameId *string `form:"gameId" binding:"omitnil,uuid"`
+}
+
+func (f GetPrizesFilter) ToDB() dbModels.GetPrizesFilter {
+	return dbModels.GetPrizesFilter{
+		GameId: f.GameId,
+	}
+}

@@ -18,8 +18,8 @@ func NewPrizeService(prizeRepository database.PrizeRepository) *PrizeService {
 	}
 }
 
-func (s *PrizeService) GetPrizes(ctx context.Context) (api.GetPrizesResponse, error) {
-	prizes, err := s.prizeRepository.GetPrizes(ctx, dbModels.GetPrizesFilter{})
+func (s *PrizeService) GetPrizes(ctx context.Context, filter api.GetPrizesFilter) (api.GetPrizesResponse, error) {
+	prizes, err := s.prizeRepository.GetPrizes(ctx, filter.ToDB())
 	if err != nil {
 		return nil, err
 	}

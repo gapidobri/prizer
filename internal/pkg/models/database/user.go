@@ -18,3 +18,7 @@ type UserFields struct {
 	Address *string `db:"address"`
 	Phone   *string `db:"phone"`
 }
+
+type GetUsersFilter struct {
+	GameId *string
+}

@@ -2,6 +2,9 @@ package api
 
 // swagger:model ErrorResponse
 type ErrorResponse struct {
+	// required: true
 	Error string `json:"error"`
-	Code  string `json:"code"`
+
+	// required: true
+	Code string `json:"code"`
 }

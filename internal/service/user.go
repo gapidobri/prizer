@@ -20,8 +20,8 @@ func NewUserService(userRepository database.UserRepository) *UserService {
 	}
 }
 
-func (s *UserService) GetUsers(ctx context.Context) (api.GetUsersResponse, error) {
-	users, err := s.userRepository.GetUsers(ctx)
+func (s *UserService) GetUsers(ctx context.Context, filter api.GetUsersFilter) (api.GetUsersResponse, error) {
+	users, err := s.userRepository.GetUsers(ctx, filter.ToDB())
 	if err != nil {
 		return nil, err
 	}

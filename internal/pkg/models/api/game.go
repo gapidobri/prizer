@@ -1,12 +1,13 @@
 package api
 
-import (
-	dbModels "github.com/gapidobri/prizer/internal/pkg/models/database"
-)
+import dbModels "github.com/gapidobri/prizer/internal/pkg/models/database"
 
 // swagger:model Game
 type Game struct {
-	Id   string `json:"id"`
+	// required: true
+	Id string `json:"id"`
+
+	// required: true
 	Name string `json:"name"`
 }
 
@@ -18,7 +19,7 @@ func GameFromDB(game dbModels.Game) Game {
 }
 
 // swagger:model GetGamesResponse
-type GetGamesResponse = []Game
+type GetGamesResponse []Game
 
 // swagger:model GetGameResponse
-type GetGameResponse = *Game
+type GetGameResponse *Game

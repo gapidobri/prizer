@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/gapidobri/prizer/internal/pkg/models/api"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -10,6 +11,11 @@ func (s *Server) userRoutes() {
 
 	// swagger:route GET /users admin users getUsers
 	//
+	// parameters:
+	//   + name: gameId
+	//     in: query
+	//     type: string
+	//
 	// responses:
 	//   200: GetUsersResponse
 	//   400: ErrorResponse
@@ -17,7 +23,14 @@ func (s *Server) userRoutes() {
 	//   500: ErrorResponse
 	//
 	usersGroup.GET("", func(c *gin.Context) {
-		users, err := s.userService.GetUsers(c.Request.Context())
+		var filter api.GetUsersFilter
+		err := c.ShouldBindQuery(&filter)
+		if err != nil {
+			_ = c.Error(err)
+			return
+		}
+
+		users, err := s.userService.GetUsers(c.Request.Context(), filter)
 		if err != nil {
 			_ = c.Error(err)
 			return
@@ -31,6 +44,7 @@ func (s *Server) userRoutes() {
 	//   + name: userId
 	//     in: path
 	//     type: string
+	//     required: true
 	//
 	// responses:
 	//   200: GetUserResponse

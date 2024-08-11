@@ -39,7 +39,7 @@ func (p *prizeRepository) GetPrizes(ctx context.Context, filter database.GetPriz
 		subQuery := sq.
 			Select("COUNT(*)").
 			From("won_prizes wp").
-			InnerJoin("draw_method_prizes USING (prize_id)").
+			InnerJoin("draw_methods_prizes USING (prize_id)").
 			Where("wp.prize_id = p.prize_id")
 
 		if filter.DrawMethodId != nil {

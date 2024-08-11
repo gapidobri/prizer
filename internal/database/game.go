@@ -26,7 +26,7 @@ func NewGameRepository(db *sqlx.DB) GameRepository {
 
 func (g *gameRepository) GetGames(ctx context.Context) ([]database.Game, error) {
 	var games []database.Game
-	err := g.db.SelectContext(ctx, &games, "SELECT * FROM game")
+	err := g.db.SelectContext(ctx, &games, "SELECT * FROM games")
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (g *gameRepository) GetGame(ctx context.Context, gameId string) (*database.
 	var game database.Game
 	err := g.db.GetContext(ctx, &game, `
 		SELECT *
-		FROM game g
+		FROM games g
 		WHERE g.game_id = $1
 	`, gameId)
 	switch {

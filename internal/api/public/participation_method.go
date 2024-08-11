@@ -15,6 +15,7 @@ func (s *Server) participationMethodRoutes() {
 	//   + name: participationMethodId
 	//     in: path
 	//     type: string
+	//     required: true
 	//   + name: body
 	//     in: body
 	//     type: ParticipationRequest

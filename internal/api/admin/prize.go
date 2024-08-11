@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/gapidobri/prizer/internal/pkg/models/api"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -10,6 +11,11 @@ func (s *Server) prizeRoutes() {
 
 	// swagger:route GET /prizes admin prizes getPrizes
 	//
+	// parameters:
+	//   + name: gameId
+	//     in: query
+	//     type: string
+	//
 	// responses:
 	//   200: GetPrizesResponse
 	//   400: ErrorResponse
@@ -17,7 +23,14 @@ func (s *Server) prizeRoutes() {
 	//   500: ErrorResponse
 	//
 	prizesGroup.GET("", func(c *gin.Context) {
-		prizes, err := s.prizeService.GetPrizes(c.Request.Context())
+		var filter api.GetPrizesFilter
+		err := c.ShouldBindQuery(&filter)
+		if err != nil {
+			_ = c.Error(err)
+			return
+		}
+
+		prizes, err := s.prizeService.GetPrizes(c.Request.Context(), filter)
 		if err != nil {
 			_ = c.Error(err)
 			return

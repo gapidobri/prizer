@@ -32,6 +32,7 @@ func (s *Server) gameRoutes() {
 	//   + name: gameId
 	//     in: path
 	//     type: string
+	//     required: true
 	//
 	// responses:
 	//   200: GetGameResponse

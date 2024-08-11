@@ -8,22 +8,25 @@ import (
 )
 
 type Server struct {
-	engine       *gin.Engine
-	gameService  *service.GameService
-	userService  *service.UserService
-	prizeService *service.PrizeService
+	engine          *gin.Engine
+	gameService     *service.GameService
+	userService     *service.UserService
+	prizeService    *service.PrizeService
+	wonPrizeService *service.WonPrizeService
 }
 
 func NewServer(
 	gameService *service.GameService,
 	userService *service.UserService,
 	prizeService *service.PrizeService,
+	wonPrizeService *service.WonPrizeService,
 ) *Server {
 	return &Server{
-		engine:       gin.Default(),
-		gameService:  gameService,
-		userService:  userService,
-		prizeService: prizeService,
+		engine:          gin.Default(),
+		gameService:     gameService,
+		userService:     userService,
+		prizeService:    prizeService,
+		wonPrizeService: wonPrizeService,
 	}
 }
 
@@ -33,6 +36,7 @@ func (s *Server) Run(address string) {
 	s.gameRoutes()
 	s.userRoutes()
 	s.prizeRoutes()
+	s.wonPrizeRoutes()
 
 	err := s.engine.Run(address)
 	if err != nil {

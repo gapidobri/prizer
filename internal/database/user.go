@@ -12,7 +12,7 @@ import (
 )
 
 type UserRepository interface {
-	GetUsers(ctx context.Context) ([]database.User, error)
+	GetUsers(ctx context.Context, filter database.GetUsersFilter) ([]database.User, error)
 	GetUser(ctx context.Context, userId string) (*database.User, error)
 	GetUserFromFields(ctx context.Context, gameId string, fields database.UserFields) (*database.User, error)
 	CreateUser(ctx context.Context, user database.CreateUser) (*database.User, error)
@@ -28,9 +28,22 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 	}
 }
 
-func (r *userRepository) GetUsers(ctx context.Context) ([]database.User, error) {
+func (r *userRepository) GetUsers(ctx context.Context, filter database.GetUsersFilter) ([]database.User, error) {
+	query := sq.
+		Select("*").
+		From("users")
+
+	if filter.GameId != nil {
+		query = query.Where(sq.Eq{"game_id": *filter.GameId})
+	}
+
+	sqlQ, args, err := query.PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to generate sql")
+	}
+
 	var users []database.User
-	err := r.db.SelectContext(ctx, &users, "SELECT * FROM users")
+	err = r.db.SelectContext(ctx, &users, sqlQ, args...)
 	if err != nil {
 		return nil, err
 	}

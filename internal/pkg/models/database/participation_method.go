@@ -3,29 +3,17 @@ package database
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"github.com/gapidobri/prizer/internal/pkg/models/enums"
 	"github.com/pkg/errors"
 )
 
 type ParticipationMethod struct {
-	Id     string              `db:"participation_method_id"`
-	GameId string              `db:"game_id"`
-	Name   string              `db:"name"`
-	Limit  *ParticipationLimit `db:"limit"`
-	Fields FieldConfig         `db:"fields"`
+	Id     string                    `db:"participation_method_id"`
+	GameId string                    `db:"game_id"`
+	Name   string                    `db:"name"`
+	Limit  *enums.ParticipationLimit `db:"limit"`
+	Fields FieldConfig               `db:"fields"`
 }
-
-type ParticipationLimit string
-
-const (
-	ParticipationLimitDaily ParticipationLimit = "daily"
-)
-
-type FieldType string
-
-const (
-	FieldTypeString FieldType = "string"
-	FieldTypeBool   FieldType = "bool"
-)
 
 type FieldConfig struct {
 	User          map[string]Field `db:"user"`
@@ -45,7 +33,11 @@ func (f *FieldConfig) Value() (driver.Value, error) {
 }
 
 type Field struct {
-	Type     FieldType `db:"type"`
-	Required bool      `db:"required"`
-	Unique   bool      `db:"unique"`
+	Type     enums.FieldType `db:"type"`
+	Required bool            `db:"required"`
+	Unique   bool            `db:"unique"`
+}
+
+type GetParticipationMethodsFilter struct {
+	GameId *string
 }

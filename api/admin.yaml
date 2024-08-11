@@ -8,6 +8,9 @@ definitions:
                 type: string
             error:
                 type: string
+        required:
+            - error
+            - code
         type: object
     Game:
         properties:
@@ -15,22 +18,56 @@ definitions:
                 type: string
             name:
                 type: string
+        required:
+            - id
+            - name
         type: object
     GetGameResponse:
         $ref: '#/definitions/Game'
+    GetGamesResponse:
+        items:
+            $ref: '#/definitions/Game'
+        type: array
     GetPrizesResponse:
         items:
             $ref: '#/definitions/Prize'
         type: array
+    GetUserResponse:
+        $ref: '#/definitions/User'
     GetUsersResponse:
         items:
             $ref: '#/definitions/User'
         type: array
+    GetWonPrizesResponse:
+        items:
+            $ref: '#/definitions/WonPrize'
+        type: array
+    Participation:
+        properties:
+            created_at: {}
+            fields:
+                additionalProperties: {}
+                type: object
+            participation_id:
+                type: string
+            participation_method_id:
+                type: string
+            user_id:
+                type: string
+        required:
+            - participation_id
+            - participation_method_id
+            - user_id
+            - created_at
+            - fields
+        type: object
     ParticipationRequest:
         properties:
             fields:
                 additionalProperties: {}
                 type: object
+        required:
+            - fields
         type: object
     ParticipationResponse:
         properties:
@@ -38,6 +75,8 @@ definitions:
                 items:
                     $ref: '#/definitions/PublicPrize'
                 type: array
+        required:
+            - prizes
         type: object
     Prize:
         properties:
@@ -52,6 +91,12 @@ definitions:
                 type: string
             name:
                 type: string
+        required:
+            - id
+            - gameId
+            - name
+            - description
+            - count
         type: object
     PublicPrize:
         properties:
@@ -59,6 +104,9 @@ definitions:
                 type: string
             name:
                 type: string
+        required:
+            - name
+            - description
         type: object
     User:
         properties:
@@ -75,6 +123,26 @@ definitions:
                 type: string
             phone:
                 type: string
+        required:
+            - id
+            - game_id
+            - email
+            - address
+            - phone
+            - additional_fields
+        type: object
+    WonPrize:
+        properties:
+            participation:
+                $ref: '#/definitions/Participation'
+            prize:
+                $ref: '#/definitions/Prize'
+            user:
+                $ref: '#/definitions/User'
+        required:
+            - prize
+            - participation
+            - user
         type: object
 host: localhost:8081
 info:
@@ -90,7 +158,9 @@ paths:
             operationId: getGames
             responses:
                 "200":
-                    $ref: '#/responses/GetGamesResponse'
+                    description: GetGamesResponse
+                    schema:
+                        $ref: '#/definitions/GetGamesResponse'
                 "400":
                     description: ErrorResponse
                     schema:
@@ -112,6 +182,7 @@ paths:
             parameters:
                 - in: path
                   name: gameId
+                  required: true
                   type: string
             responses:
                 "200":
@@ -136,6 +207,10 @@ paths:
     /prizes:
         get:
             operationId: getPrizes
+            parameters:
+                - in: query
+                  name: gameId
+                  type: string
             responses:
                 "200":
                     description: GetPrizesResponse
@@ -159,6 +234,10 @@ paths:
     /users:
         get:
             operationId: getUsers
+            parameters:
+                - in: query
+                  name: gameId
+                  type: string
             responses:
                 "200":
                     description: GetUsersResponse
@@ -185,10 +264,13 @@ paths:
             parameters:
                 - in: path
                   name: userId
+                  required: true
                   type: string
             responses:
                 "200":
-                    $ref: '#/responses/GetUserResponse'
+                    description: GetUserResponse
+                    schema:
+                        $ref: '#/definitions/GetUserResponse'
                 "400":
                     description: ErrorResponse
                     schema:
@@ -204,6 +286,39 @@ paths:
             tags:
                 - admin
                 - users
+    /won-prizes:
+        get:
+            operationId: getWonPrizes
+            parameters:
+                - in: query
+                  name: gameId
+                  type: string
+                - in: query
+                  name: userId
+                  type: string
+                - in: query
+                  name: prizeId
+                  type: string
+            responses:
+                "200":
+                    description: GetWonPrizesResponse
+                    schema:
+                        $ref: '#/definitions/GetWonPrizesResponse'
+                "400":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "403":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "500":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+            tags:
+                - admin
+                - wonPrizes
 produces:
     - application/json
 schemes:

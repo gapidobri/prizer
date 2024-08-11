@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	sq "github.com/Masterminds/squirrel"
 	er "github.com/gapidobri/prizer/internal/pkg/errors"
 	"github.com/gapidobri/prizer/internal/pkg/models/database"
 	"github.com/jmoiron/sqlx"
@@ -10,6 +11,7 @@ import (
 )
 
 type ParticipationMethodRepository interface {
+	GetParticipationMethods(ctx context.Context, filter database.GetParticipationMethodsFilter) ([]database.ParticipationMethod, error)
 	GetParticipationMethod(ctx context.Context, participationMethodId string) (*database.ParticipationMethod, error)
 }
 
@@ -23,9 +25,31 @@ func NewParticipationMethodRepository(db *sqlx.DB) ParticipationMethodRepository
 	}
 }
 
-func (c *participationMethodRepository) GetParticipationMethod(ctx context.Context, participationMethodId string) (*database.ParticipationMethod, error) {
+func (r *participationMethodRepository) GetParticipationMethods(ctx context.Context, filter database.GetParticipationMethodsFilter) ([]database.ParticipationMethod, error) {
+	query := sq.
+		Select("*").
+		From("participation_methods")
+
+	if filter.GameId != nil {
+		query = query.Where(sq.Eq{"game_id": filter.GameId})
+	}
+
+	sqlQ, args, err := query.PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build sql query")
+	}
+
+	var participationMethods []database.ParticipationMethod
+	err = r.db.SelectContext(ctx, &participationMethods, sqlQ, args...)
+	if err != nil {
+		return nil, err
+	}
+	return participationMethods, nil
+}
+
+func (r *participationMethodRepository) GetParticipationMethod(ctx context.Context, participationMethodId string) (*database.ParticipationMethod, error) {
 	var participationMethod database.ParticipationMethod
-	err := c.db.GetContext(ctx, &participationMethod, `
+	err := r.db.GetContext(ctx, &participationMethod, `
 		SELECT *
 		FROM participation_methods
 		WHERE participation_method_id = $1
