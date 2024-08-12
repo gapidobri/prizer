@@ -6,9 +6,11 @@ import (
 	"github.com/gapidobri/prizer/internal/api/public"
 	"github.com/gapidobri/prizer/internal/database"
 	"github.com/gapidobri/prizer/internal/pkg/client/addressvalidation"
+	"github.com/gapidobri/prizer/internal/pkg/models/config"
 	"github.com/gapidobri/prizer/internal/service"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/mattbaird/gochimp"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -19,16 +21,25 @@ import (
 func Run() {
 	ctx := context.Background()
 
-	connStr := "user=postgres dbname=postgres password=postgres sslmode=disable"
-	db, err := sqlx.Connect("postgres", connStr)
+	var cfg config.Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		log.Fatalf("failed to decode config, %v", err)
+	}
+
+	db, err := sqlx.Connect("postgres", cfg.Database.ConnectionString)
+	if err != nil {
+		log.Fatalf("failed to connect to database, %v", err)
+	}
+
+	// Clients
+	addressValidationClient, err := addressvalidation.NewClient(ctx, cfg.AddressValidation.ApiKey)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Clients
-	addressValidationClient, err := addressvalidation.NewClient(ctx, viper.GetString("address_validation_api_key"))
+	mandrillClient, err := gochimp.NewMandrill(cfg.Mandrill.ApiKey)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create mandrill client, %v", err)
 	}
 
 	// Repositories
@@ -39,6 +50,7 @@ func Run() {
 	userRepository := database.NewUserRepository(db)
 	participationMethodRepository := database.NewParticipationMethodRepository(db)
 	participationRepository := database.NewParticipationRepository(db)
+	mailTemplateRepository := database.NewMailTemplateRepository(db)
 
 	// Services
 	gameService := service.NewGameService(
@@ -49,13 +61,16 @@ func Run() {
 		drawMethodRepository,
 		participationMethodRepository,
 		participationRepository,
+		mailTemplateRepository,
 		addressValidationClient,
+		mandrillClient,
 	)
 	userService := service.NewUserService(userRepository)
 	prizeService := service.NewPrizeService(prizeRepository)
 	wonPrizeService := service.NewWonPrizeService(wonPrizeRepository)
 	participationMethodService := service.NewParticipationMethodService(participationMethodRepository)
 
+	// APIs
 	publicApi := public.NewServer(gameService)
 	adminApi := admin.NewServer(
 		gameService,

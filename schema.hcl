@@ -41,6 +41,14 @@ table "participation_methods" {
   column "fields" {
     type = json
   }
+  column "win_mail_template_id" {
+    type = uuid
+    null = true
+  }
+  column "lose_mail_template_id" {
+    type = uuid
+    null = true
+  }
   primary_key {
     columns = [
       column.participation_method_id
@@ -49,6 +57,18 @@ table "participation_methods" {
   foreign_key "game_fk" {
     columns = [column.game_id]
     ref_columns = [table.games.column.game_id]
+    on_delete = CASCADE
+    on_update = CASCADE
+  }
+  foreign_key "win_mail_template_fk" {
+    columns = [column.win_mail_template_id]
+    ref_columns = [table.mail_templates.column.mail_template_id]
+    on_delete = CASCADE
+    on_update = CASCADE
+  }
+  foreign_key "lose_mail_template_fk" {
+    columns = [column.lose_mail_template_id]
+    ref_columns = [table.mail_templates.column.mail_template_id]
     on_delete = CASCADE
     on_update = CASCADE
   }
@@ -277,6 +297,40 @@ table "participations" {
   foreign_key "user_fk" {
     columns = [column.user_id]
     ref_columns = [table.users.column.user_id]
+    on_delete = CASCADE
+    on_update = CASCADE
+  }
+}
+
+table "mail_templates" {
+  schema = schema.public
+  column "mail_template_id" {
+    type = uuid
+    default = sql("gen_random_uuid()")
+  }
+  column "game_id" {
+    type = uuid
+  }
+  column "name" {
+    type = varchar
+  }
+  column "from_email" {
+    type = varchar
+  }
+  column "from_name" {
+    type = varchar
+  }
+  column "subject" {
+    type = varchar
+  }
+  primary_key {
+    columns = [
+      column.mail_template_id
+    ]
+  }
+  foreign_key "game_fk" {
+    columns = [column.game_id]
+    ref_columns = [table.games.column.game_id]
     on_delete = CASCADE
     on_update = CASCADE
   }

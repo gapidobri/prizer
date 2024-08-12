@@ -8,16 +8,18 @@ import (
 )
 
 type ParticipationMethod struct {
-	Id     string                   `db:"participation_method_id"`
-	GameId string                   `db:"game_id"`
-	Name   string                   `db:"name"`
-	Limit  enums.ParticipationLimit `db:"limit"`
-	Fields FieldConfig              `db:"fields"`
+	Id                 string                   `db:"participation_method_id"`
+	GameId             string                   `db:"game_id"`
+	Name               string                   `db:"name"`
+	Limit              enums.ParticipationLimit `db:"limit"`
+	Fields             FieldConfig              `db:"fields"`
+	WinMailTemplateId  *string                  `db:"win_mail_template_id"`
+	LoseMailTemplateId *string                  `db:"lose_mail_template_id"`
 }
 
 type FieldConfig struct {
-	User          map[string]Field `db:"user"`
-	Participation map[string]Field `db:"participation"`
+	User          map[string]Field `json:"user"`
+	Participation map[string]Field `json:"participation"`
 }
 
 func (f *FieldConfig) Scan(value interface{}) error {
@@ -33,9 +35,10 @@ func (f *FieldConfig) Value() (driver.Value, error) {
 }
 
 type Field struct {
-	Type     enums.FieldType `db:"type"`
-	Required bool            `db:"required"`
-	Unique   bool            `db:"unique"`
+	Type         enums.FieldType `json:"type"`
+	Required     bool            `json:"required"`
+	Unique       bool            `json:"unique"`
+	MailVariable *string         `json:"mail_variable"`
 }
 
 type GetParticipationMethodsFilter struct {

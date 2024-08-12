@@ -10,13 +10,10 @@ type User struct {
 	// required: true
 	GameId string `json:"game_id"`
 
-	// required: true
 	Email *string `json:"email"`
 
-	// required: true
 	Address *string `json:"address"`
 
-	// required: true
 	Phone *string `json:"phone"`
 
 	// required: true

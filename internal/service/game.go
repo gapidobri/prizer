@@ -13,7 +13,9 @@ import (
 	"github.com/gapidobri/prizer/internal/pkg/models/enums"
 	"github.com/gapidobri/prizer/internal/pkg/util"
 	"github.com/google/uuid"
+	"github.com/mattbaird/gochimp"
 	"github.com/samber/lo"
+	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"net/mail"
 	"time"
@@ -27,7 +29,9 @@ type GameService struct {
 	drawMethodRepository          database.DrawMethodRepository
 	participationMethodRepository database.ParticipationMethodRepository
 	participationRepository       database.ParticipationRepository
+	mailTemplateRepository        database.MailTemplateRepository
 	addressValidationClient       *addressvalidation.Client
+	mandrillClient                *gochimp.MandrillAPI
 }
 
 func NewGameService(
@@ -38,7 +42,9 @@ func NewGameService(
 	drawMethodRepository database.DrawMethodRepository,
 	participationMethodRepository database.ParticipationMethodRepository,
 	participationRepository database.ParticipationRepository,
+	mailTemplateRepository database.MailTemplateRepository,
 	addressValidationClient *addressvalidation.Client,
+	mandrillClient *gochimp.MandrillAPI,
 ) *GameService {
 	return &GameService{
 		gameRepository:                gameRepository,
@@ -48,7 +54,9 @@ func NewGameService(
 		drawMethodRepository:          drawMethodRepository,
 		participationMethodRepository: participationMethodRepository,
 		participationRepository:       participationRepository,
+		mailTemplateRepository:        mailTemplateRepository,
 		addressValidationClient:       addressValidationClient,
+		mandrillClient:                mandrillClient,
 	}
 }
 
@@ -82,6 +90,12 @@ func (s *GameService) GetGame(ctx context.Context, gameId string) (api.GetGameRe
 }
 
 func (s *GameService) Participate(ctx context.Context, participationMethodId string, roll api.ParticipationRequest) (*api.ParticipationResponse, error) {
+	logger := log.WithContext(ctx).WithFields(log.Fields{
+		"participationMethodId": participationMethodId,
+	})
+
+	logger.Info("New participation")
+
 	participationMethod, err := s.participationMethodRepository.GetParticipationMethod(ctx, participationMethodId)
 	if err != nil {
 		return nil, err
@@ -179,11 +193,14 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 			AdditionalFields: additionalUserFields,
 		})
 		if err != nil {
+			logger.WithError(err).Error("Failed to create user")
 			return nil, err
 		}
 	default:
 		return nil, err
 	}
+
+	logger = logger.WithField("userId", user.Id)
 
 	// Check if user can participate
 	switch participationMethod.Limit {
@@ -197,6 +214,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 			To:                    lo.ToPtr(time.Now()),
 		})
 		if err != nil {
+			logger.WithError(err).Error("Failed to get participations")
 			return nil, err
 		}
 		if len(participations) != 0 {
@@ -212,6 +230,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 			Fields:                &uniqueParticipationFields,
 		})
 		if err != nil {
+			logger.WithError(err).Error("Failed to get participations")
 			return nil, err
 		}
 		if len(participations) != 0 {
@@ -224,6 +243,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 		ParticipationMethodId: &participationMethodId,
 	})
 	if err != nil {
+		logger.WithError(err).Error("Failed to get draw methods")
 		return nil, err
 	}
 
@@ -237,6 +257,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 			AvailableOnly: true,
 		})
 		if err != nil {
+			logger.WithError(err).Error("Failed to get prizes")
 			return nil, err
 		}
 
@@ -252,6 +273,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 			var data dbModels.DrawMethodChanceData
 			err = json.Unmarshal([]byte(drawMethod.Data), &data)
 			if err != nil {
+				logger.WithError(err).Error("Failed to unmarshal draw method chance data")
 				return nil, err
 			}
 
@@ -271,6 +293,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 		Fields:                participationFields,
 	})
 	if err != nil {
+		logger.WithError(err).Error("Failed to create participation")
 		return nil, err
 	}
 
@@ -280,6 +303,96 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 			PrizeId:         prize.Id,
 		})
 		if err != nil {
+			logger.WithError(err).Error("Failed to create won prize")
+			return nil, err
+		}
+
+		// Send win email
+		if participationMethod.WinMailTemplateId != nil && user.Email != nil {
+			template, err := s.mailTemplateRepository.GetMailTemplate(ctx, *participationMethod.WinMailTemplateId)
+			if err != nil {
+				logger.WithError(err).Error("Failed to get win mail template")
+				return nil, err
+			}
+
+			variables := []gochimp.Var{
+				{Name: "PRIZE_NAME", Content: prize.Name},
+				{Name: "PRIZE_DESCRIPTION", Content: prize.Description},
+			}
+
+			for key, field := range participationMethod.Fields.User {
+				if field.MailVariable == nil {
+					continue
+				}
+				value, exists := additionalUserFields[key]
+				if !exists {
+					continue
+				}
+				variables = append(variables, gochimp.Var{
+					Name:    *field.MailVariable,
+					Content: value,
+				})
+			}
+
+			_, err = s.mandrillClient.MessageSendTemplate(
+				template.Name,
+				[]gochimp.Var{},
+				gochimp.Message{
+					FromEmail:       template.FromEmail,
+					FromName:        template.FromName,
+					Subject:         template.Subject,
+					GlobalMergeVars: variables,
+					To: []gochimp.Recipient{
+						{Email: *user.Email},
+					},
+				},
+				true,
+			)
+			if err != nil {
+				log.WithError(err).Error("Failed to send win email")
+			}
+		}
+	}
+
+	// Send lose email
+	if len(wonPrizes) == 0 {
+		template, err := s.mailTemplateRepository.GetMailTemplate(ctx, *participationMethod.LoseMailTemplateId)
+		if err != nil {
+			logger.WithError(err).Error("Failed to get lose mail template")
+			return nil, err
+		}
+
+		var variables []gochimp.Var
+		for key, field := range participationMethod.Fields.User {
+			if field.MailVariable == nil {
+				continue
+			}
+			value, exists := additionalUserFields[key]
+			if !exists {
+				continue
+			}
+			variables = append(variables, gochimp.Var{
+				Name:    *field.MailVariable,
+				Content: value,
+			})
+		}
+
+		_, err = s.mandrillClient.MessageSendTemplate(
+			template.Name,
+			[]gochimp.Var{},
+			gochimp.Message{
+				FromEmail:       template.FromEmail,
+				FromName:        template.FromName,
+				Subject:         template.Subject,
+				GlobalMergeVars: variables,
+				To: []gochimp.Recipient{
+					{Email: *user.Email},
+				},
+			},
+			true,
+		)
+		if err != nil {
+			log.WithError(err).Error("Failed to send lose email")
 			return nil, err
 		}
 	}
