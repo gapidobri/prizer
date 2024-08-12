@@ -15,4 +15,4 @@ FROM alpine:latest
 
 COPY --from=build /app/prizer /prizer
 
-CMD ["/prizer"]
+ENTRYPOINT ["/prizer"]
