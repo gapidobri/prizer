@@ -15,4 +15,6 @@ FROM alpine:latest
 
 COPY --from=build /app/prizer /prizer
 
+ENV GIN_MODE=release
+
 ENTRYPOINT ["/prizer"]
