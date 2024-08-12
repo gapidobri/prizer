@@ -11,8 +11,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/mattbaird/gochimp"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,23 +23,23 @@ func Run() {
 
 	var cfg config.Config
 	if err := viper.Unmarshal(&cfg); err != nil {
-		log.Fatalf("failed to decode config, %v", err)
+		log.WithError(err).Fatal("Failed to decode config")
 	}
 
 	db, err := sqlx.Connect("postgres", cfg.Database.ConnectionString)
 	if err != nil {
-		log.Fatalf("failed to connect to database, %v", err)
+		log.WithError(err).Fatal("Failed to connect to database")
 	}
 
 	// Clients
 	addressValidationClient, err := addressvalidation.NewClient(ctx, cfg.AddressValidation.ApiKey)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal("Failed to create address validation client")
 	}
 
 	mandrillClient, err := gochimp.NewMandrill(cfg.Mandrill.ApiKey)
 	if err != nil {
-		log.Fatalf("failed to create mandrill client, %v", err)
+		log.WithError(err).Fatal("Failed to create mandrill client")
 	}
 
 	// Repositories
@@ -80,12 +80,12 @@ func Run() {
 		participationMethodService,
 	)
 
-	go publicApi.Run(":8080")
-	go adminApi.Run(":8081")
+	go publicApi.Run(cfg.Http.Public.Address)
+	go adminApi.Run(cfg.Http.Admin.Address)
 
 	sign := make(chan os.Signal, 1)
 	signal.Notify(sign, syscall.SIGINT, syscall.SIGTERM)
 	<-sign
 
-	log.Println("Shutting down...")
+	log.Info("Shutting down...")
 }

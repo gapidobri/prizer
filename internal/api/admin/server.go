@@ -4,7 +4,7 @@ import (
 	"github.com/gapidobri/prizer/internal/api"
 	"github.com/gapidobri/prizer/internal/service"
 	"github.com/gin-gonic/gin"
-	"log"
+	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
@@ -41,6 +41,8 @@ func (s *Server) Run(address string) {
 	s.prizeRoutes()
 	s.wonPrizeRoutes()
 	s.participationMethodRoutes()
+
+	log.Infof("Admin API listening on %s", address)
 
 	err := s.engine.Run(address)
 	if err != nil {

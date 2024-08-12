@@ -1,10 +1,20 @@
 package config
 
 type Config struct {
+	Http              Http              `mapstructure:"http"`
 	Database          Database          `mapstructure:"database"`
 	AddressValidation AddressValidation `mapstructure:"address_validation"`
 	Mailchimp         Mailchimp         `mapstructure:"mailchimp"`
 	Mandrill          Mandrill          `mapstructure:"mandrill"`
+}
+
+type Http struct {
+	Public Api `mapstructure:"public"`
+	Admin  Api `mapstructure:"admin"`
+}
+
+type Api struct {
+	Address string `mapstructure:"address"`
 }
 
 type Database struct {
@@ -20,6 +30,5 @@ type Mailchimp struct {
 }
 
 type Mandrill struct {
-	User   string `mapstructure:"user"`
 	ApiKey string `mapstructure:"api_key"`
 }
