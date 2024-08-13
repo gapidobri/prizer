@@ -9,12 +9,18 @@ type Game struct {
 
 	// required: true
 	Name string `json:"name"`
+
+	GoogleSheetId *string `json:"google_sheet_id"`
+
+	GoogleSheetTabName *string `json:"google_sheet_tab_name"`
 }
 
 func GameFromDB(game dbModels.Game) Game {
 	return Game{
-		Id:   game.Id,
-		Name: game.Name,
+		Id:                 game.Id,
+		Name:               game.Name,
+		GoogleSheetId:      game.GoogleSheetId,
+		GoogleSheetTabName: game.GoogleSheetTabName,
 	}
 }
 
