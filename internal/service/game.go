@@ -454,6 +454,10 @@ func (s *GameService) appendRowToGoogleSheets(
 	user dbModels.User,
 	prize *dbModels.Prize,
 ) error {
+	if game.GoogleSheetId == nil || game.GoogleSheetTabName == nil {
+		return nil
+	}
+
 	fields := []any{
 		participation.Id,
 		participation.CreatedAt.Format("02. 01. 2006 15:04"),
@@ -472,5 +476,5 @@ func (s *GameService) appendRowToGoogleSheets(
 		fields = append(fields, "/")
 	}
 
-	return s.sheetsClient.AppendRow(game.GoogleSheetId, game.GoogleSheetTabName, fields)
+	return s.sheetsClient.AppendRow(*game.GoogleSheetId, *game.GoogleSheetTabName, fields)
 }
