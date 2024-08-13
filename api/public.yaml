@@ -145,6 +145,8 @@ definitions:
                 type: string
             id:
                 type: string
+            image_url:
+                type: string
             name:
                 type: string
         required:
@@ -157,6 +159,8 @@ definitions:
     PublicPrize:
         properties:
             description:
+                type: string
+            image_url:
                 type: string
             name:
                 type: string
@@ -182,9 +186,6 @@ definitions:
         required:
             - id
             - game_id
-            - email
-            - address
-            - phone
             - additional_fields
         type: object
     WonPrize:

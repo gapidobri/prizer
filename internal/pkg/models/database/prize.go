@@ -1,11 +1,12 @@
 package database
 
 type Prize struct {
-	Id          string `db:"prize_id"`
-	GameId      string `db:"game_id"`
-	Name        string `db:"name"`
-	Description string `db:"description"`
-	Count       int    `db:"count"`
+	Id          string  `db:"prize_id"`
+	GameId      string  `db:"game_id"`
+	Name        string  `db:"name"`
+	Description string  `db:"description"`
+	ImageUrl    *string `db:"image_url"`
+	Count       int     `db:"count"`
 }
 
 type GetPrizesFilter struct {

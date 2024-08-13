@@ -5,7 +5,8 @@ import (
 	"github.com/gapidobri/prizer/internal/api/admin"
 	"github.com/gapidobri/prizer/internal/api/public"
 	"github.com/gapidobri/prizer/internal/database"
-	"github.com/gapidobri/prizer/internal/pkg/client/addressvalidation"
+	"github.com/gapidobri/prizer/internal/pkg/clients/addressvalidation"
+	"github.com/gapidobri/prizer/internal/pkg/clients/sheets"
 	"github.com/gapidobri/prizer/internal/pkg/models/config"
 	"github.com/gapidobri/prizer/internal/service"
 	"github.com/jmoiron/sqlx"
@@ -42,6 +43,11 @@ func Run() {
 		log.WithError(err).Fatal("Failed to create mandrill client")
 	}
 
+	sheetsClient, err := sheets.NewClient(ctx, cfg.GoogleSheets.ServiceAccountKeyPath)
+	if err != nil {
+		log.WithError(err).Fatal("Failed to create sheets client")
+	}
+
 	// Repositories
 	gameRepository := database.NewGameRepository(db)
 	prizeRepository := database.NewPrizeRepository(db)
@@ -64,6 +70,7 @@ func Run() {
 		mailTemplateRepository,
 		addressValidationClient,
 		mandrillClient,
+		sheetsClient,
 	)
 	userService := service.NewUserService(userRepository)
 	prizeService := service.NewPrizeService(prizeRepository)

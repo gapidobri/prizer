@@ -6,7 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gapidobri/prizer/internal/database"
-	"github.com/gapidobri/prizer/internal/pkg/client/addressvalidation"
+	"github.com/gapidobri/prizer/internal/pkg/clients/addressvalidation"
+	"github.com/gapidobri/prizer/internal/pkg/clients/sheets"
 	er "github.com/gapidobri/prizer/internal/pkg/errors"
 	"github.com/gapidobri/prizer/internal/pkg/models/api"
 	dbModels "github.com/gapidobri/prizer/internal/pkg/models/database"
@@ -32,6 +33,7 @@ type GameService struct {
 	mailTemplateRepository        database.MailTemplateRepository
 	addressValidationClient       *addressvalidation.Client
 	mandrillClient                *gochimp.MandrillAPI
+	sheetsClient                  *sheets.Client
 }
 
 func NewGameService(
@@ -45,6 +47,7 @@ func NewGameService(
 	mailTemplateRepository database.MailTemplateRepository,
 	addressValidationClient *addressvalidation.Client,
 	mandrillClient *gochimp.MandrillAPI,
+	sheetsClient *sheets.Client,
 ) *GameService {
 	return &GameService{
 		gameRepository:                gameRepository,
@@ -57,6 +60,7 @@ func NewGameService(
 		mailTemplateRepository:        mailTemplateRepository,
 		addressValidationClient:       addressValidationClient,
 		mandrillClient:                mandrillClient,
+		sheetsClient:                  sheetsClient,
 	}
 }
 
@@ -101,7 +105,10 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 		return nil, err
 	}
 
-	gameId := participationMethod.GameId
+	game, err := s.gameRepository.GetGame(ctx, participationMethod.GameId)
+	if err != nil {
+		return nil, err
+	}
 
 	// Sanitize and validate incoming data
 	additionalUserFields := dbModels.JsonMap{}
@@ -182,13 +189,13 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 	}
 
 	// Get / create user
-	user, err := s.userRepository.GetUserFromFields(ctx, gameId, uniqueFields)
+	user, err := s.userRepository.GetUserFromFields(ctx, game.Id, uniqueFields)
 	switch {
 	case err == nil:
 		break
 	case errors.Is(err, er.UserNotFound):
 		user, err = s.userRepository.CreateUser(ctx, dbModels.CreateUser{
-			GameId:           gameId,
+			GameId:           game.Id,
 			UserFields:       userFields,
 			AdditionalFields: additionalUserFields,
 		})
@@ -239,7 +246,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 	}
 
 	// Participate in all draw methods
-	drawMethods, err := s.drawMethodRepository.GetDrawMethods(ctx, gameId, dbModels.GetDrawMethodsFilter{
+	drawMethods, err := s.drawMethodRepository.GetDrawMethods(ctx, game.Id, dbModels.GetDrawMethodsFilter{
 		ParticipationMethodId: &participationMethodId,
 	})
 	if err != nil {
@@ -252,7 +259,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 	for _, drawMethod := range drawMethods {
 		var prizes []dbModels.Prize
 		prizes, err = s.prizeRepository.GetPrizes(ctx, dbModels.GetPrizesFilter{
-			GameId:        &gameId,
+			GameId:        &game.Id,
 			DrawMethodId:  &drawMethod.Id,
 			AvailableOnly: true,
 		})
@@ -395,6 +402,19 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 			log.WithError(err).Error("Failed to send lose email")
 			return nil, err
 		}
+
+		// Append participation without prize to google sheet
+		err = s.appendRowToGoogleSheets(*game, *participationMethod, *participation, *user, nil)
+		if err != nil {
+			logger.WithError(err).Error("Failed to append row to google sheets")
+		}
+	}
+
+	for _, prize := range wonPrizes {
+		err = s.appendRowToGoogleSheets(*game, *participationMethod, *participation, *user, &prize)
+		if err != nil {
+			logger.WithError(err).Error("Failed to append row to google sheets")
+		}
 	}
 
 	publicPrizes := lo.Map(wonPrizes, func(prize dbModels.Prize, _ int) api.PublicPrize {
@@ -425,4 +445,32 @@ func (s *GameService) validateField(field dbModels.Field, key string, value any)
 	default:
 		return nil, er.BadRequest.With(fmt.Sprintf("Field %s is not a valid field", key))
 	}
+}
+
+func (s *GameService) appendRowToGoogleSheets(
+	game dbModels.Game,
+	participationMethod dbModels.ParticipationMethod,
+	participation dbModels.Participation,
+	user dbModels.User,
+	prize *dbModels.Prize,
+) error {
+	fields := []any{
+		participation.Id,
+		participation.CreatedAt.Format("02. 01. 2006 15:04"),
+		user.Email, user.Address, user.Phone,
+	}
+	for _, value := range user.AdditionalFields {
+		fields = append(fields, value)
+	}
+	fields = append(fields, participationMethod.Name)
+	for _, value := range participation.Fields {
+		fields = append(fields, value)
+	}
+	if prize != nil {
+		fields = append(fields, prize.Name)
+	} else {
+		fields = append(fields, "/")
+	}
+
+	return s.sheetsClient.AppendRow(game.GoogleSheetId, game.GoogleSheetTabName, fields)
 }

@@ -10,6 +10,14 @@ table "games" {
     type = varchar
     null = false
   }
+  column "google_sheet_id" {
+    type = varchar
+    null = true
+  }
+  column "google_sheet_tab_name" {
+    type = varchar
+    null = true
+  }
   primary_key {
     columns = [
       column.game_id
@@ -173,6 +181,10 @@ table "prizes" {
   }
   column "description" {
     type = varchar
+  }
+  column "image_url" {
+    type = varchar
+    null = true
   }
   column "count" {
     type = integer

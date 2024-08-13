@@ -8,12 +8,15 @@ type PublicPrize struct {
 
 	// required: true
 	Description string `json:"description"`
+
+	ImageUrl *string `json:"image_url"`
 }
 
 func PublicPrizeFromDB(prize dbModels.Prize) PublicPrize {
 	return PublicPrize{
 		Name:        prize.Name,
 		Description: prize.Description,
+		ImageUrl:    prize.ImageUrl,
 	}
 }
 
@@ -31,6 +34,8 @@ type Prize struct {
 	// required: true
 	Description string `json:"description"`
 
+	ImageUrl *string `json:"image_url"`
+
 	// required: true
 	Count int `json:"count"`
 }
@@ -41,6 +46,7 @@ func PrizeFromDB(prize dbModels.Prize) Prize {
 		GameId:      prize.GameId,
 		Name:        prize.Name,
 		Description: prize.Description,
+		ImageUrl:    prize.ImageUrl,
 		Count:       prize.Count,
 	}
 }
