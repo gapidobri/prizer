@@ -96,6 +96,7 @@ func (s *GameService) GetGame(ctx context.Context, gameId string) (api.GetGameRe
 func (s *GameService) Participate(ctx context.Context, participationMethodId string, roll api.ParticipationRequest) (*api.ParticipationResponse, error) {
 	logger := log.WithContext(ctx).WithFields(log.Fields{
 		"participationMethodId": participationMethodId,
+		"fields":                roll.Fields,
 	})
 
 	logger.Info("New participation")
