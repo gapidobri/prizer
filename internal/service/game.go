@@ -19,6 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"net/mail"
+	"strings"
 	"time"
 )
 
@@ -157,6 +158,20 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 			userFields.Address = &address
 			if field.Unique {
 				uniqueFields.Address = &address
+			}
+			continue
+
+		case "phone":
+			str, ok := value.(string)
+			if !ok {
+				return nil, er.BadRequest.With(fmt.Sprintf("Field %s is not a string", key))
+			}
+
+			str = strings.TrimSpace(str)
+
+			userFields.Phone = &str
+			if field.Unique {
+				uniqueFields.Phone = &str
 			}
 			continue
 		}
