@@ -485,9 +485,11 @@ func (s *GameService) appendRowToGoogleSheets(
 		fields = append(fields, value)
 	}
 	fields = append(fields, participationMethod.Name)
+	var participationStrings []string
 	for _, value := range participation.Fields {
-		fields = append(fields, value)
+		participationStrings = append(participationStrings, fmt.Sprintf("%v", value))
 	}
+	fields = append(fields, strings.Join(participationStrings, ", "))
 	if prize != nil {
 		fields = append(fields, prize.Name)
 	} else {
