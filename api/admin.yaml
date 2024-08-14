@@ -44,6 +44,10 @@ definitions:
         type: object
     Game:
         properties:
+            google_sheet_id:
+                type: string
+            google_sheet_tab_name:
+                type: string
             id:
                 type: string
             name:

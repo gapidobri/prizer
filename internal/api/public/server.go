@@ -4,6 +4,7 @@ import (
 	"github.com/gapidobri/prizer/internal/api"
 	"github.com/gapidobri/prizer/internal/service"
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -12,16 +13,14 @@ type Server struct {
 	gameService *service.GameService
 }
 
-func NewServer(gameService *service.GameService) *Server {
+func NewServer(db *sqlx.DB, gameService *service.GameService) *Server {
 	return &Server{
-		engine:      gin.Default(),
+		engine:      api.NewServer(db),
 		gameService: gameService,
 	}
 }
 
 func (s *Server) Run(address string) {
-	s.engine.Use(api.ErrorHandler)
-
 	s.participationMethodRoutes()
 
 	log.Infof("Public API listening on %s", address)

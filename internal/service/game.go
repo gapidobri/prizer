@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/gapidobri/prizer/internal/database"
 	"github.com/gapidobri/prizer/internal/pkg/clients/addressvalidation"
+	"github.com/gapidobri/prizer/internal/pkg/clients/mandrill"
 	"github.com/gapidobri/prizer/internal/pkg/clients/sheets"
 	er "github.com/gapidobri/prizer/internal/pkg/errors"
 	"github.com/gapidobri/prizer/internal/pkg/models/api"
@@ -32,9 +33,9 @@ type GameService struct {
 	participationMethodRepository database.ParticipationMethodRepository
 	participationRepository       database.ParticipationRepository
 	mailTemplateRepository        database.MailTemplateRepository
-	addressValidationClient       *addressvalidation.Client
-	mandrillClient                *gochimp.MandrillAPI
-	sheetsClient                  *sheets.Client
+	addressValidationClient       addressvalidation.Client
+	mandrillClient                mandrill.Client
+	sheetsClient                  sheets.Client
 }
 
 func NewGameService(
@@ -46,9 +47,9 @@ func NewGameService(
 	participationMethodRepository database.ParticipationMethodRepository,
 	participationRepository database.ParticipationRepository,
 	mailTemplateRepository database.MailTemplateRepository,
-	addressValidationClient *addressvalidation.Client,
-	mandrillClient *gochimp.MandrillAPI,
-	sheetsClient *sheets.Client,
+	addressValidationClient addressvalidation.Client,
+	mandrillClient mandrill.Client,
+	sheetsClient sheets.Client,
 ) *GameService {
 	return &GameService{
 		gameRepository:                gameRepository,
@@ -357,9 +358,8 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 				})
 			}
 
-			_, err = s.mandrillClient.MessageSendTemplate(
+			err = s.mandrillClient.SendTemplate(
 				template.Name,
-				[]gochimp.Var{},
 				gochimp.Message{
 					FromEmail:       template.FromEmail,
 					FromName:        template.FromName,
@@ -369,7 +369,6 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 						{Email: *user.Email},
 					},
 				},
-				true,
 			)
 			if err != nil {
 				log.WithError(err).Error("Failed to send win email")
@@ -401,9 +400,8 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 				})
 			}
 
-			_, err = s.mandrillClient.MessageSendTemplate(
+			err = s.mandrillClient.SendTemplate(
 				template.Name,
-				[]gochimp.Var{},
 				gochimp.Message{
 					FromEmail:       template.FromEmail,
 					FromName:        template.FromName,
@@ -413,7 +411,6 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 						{Email: *user.Email},
 					},
 				},
-				true,
 			)
 			if err != nil {
 				log.WithError(err).Error("Failed to send lose email")

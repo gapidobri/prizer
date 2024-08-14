@@ -4,6 +4,7 @@ import (
 	"github.com/gapidobri/prizer/internal/api"
 	"github.com/gapidobri/prizer/internal/service"
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,6 +18,7 @@ type Server struct {
 }
 
 func NewServer(
+	db *sqlx.DB,
 	gameService *service.GameService,
 	userService *service.UserService,
 	prizeService *service.PrizeService,
@@ -24,7 +26,7 @@ func NewServer(
 	participationMethodService *service.ParticipationMethodService,
 ) *Server {
 	return &Server{
-		engine:                     gin.Default(),
+		engine:                     api.NewServer(db),
 		gameService:                gameService,
 		userService:                userService,
 		prizeService:               prizeService,
@@ -34,8 +36,6 @@ func NewServer(
 }
 
 func (s *Server) Run(address string) {
-	s.engine.Use(api.ErrorHandler)
-
 	s.gameRoutes()
 	s.userRoutes()
 	s.prizeRoutes()

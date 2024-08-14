@@ -1,0 +1,3 @@
+package mandrill
+
+// mocktail:Client

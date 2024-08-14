@@ -1,0 +1,3 @@
+package addressvalidation
+
+// mocktail:Client

@@ -6,12 +6,12 @@ import (
 	"github.com/gapidobri/prizer/internal/api/public"
 	"github.com/gapidobri/prizer/internal/database"
 	"github.com/gapidobri/prizer/internal/pkg/clients/addressvalidation"
+	"github.com/gapidobri/prizer/internal/pkg/clients/mandrill"
 	"github.com/gapidobri/prizer/internal/pkg/clients/sheets"
 	"github.com/gapidobri/prizer/internal/pkg/models/config"
 	"github.com/gapidobri/prizer/internal/service"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/mattbaird/gochimp"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"os"
@@ -38,7 +38,7 @@ func Run() {
 		log.WithError(err).Fatal("Failed to create address validation client")
 	}
 
-	mandrillClient, err := gochimp.NewMandrill(cfg.Mandrill.ApiKey)
+	mandrillClient, err := mandrill.NewClient(cfg.Mandrill.ApiKey)
 	if err != nil {
 		log.WithError(err).Fatal("Failed to create mandrill client")
 	}
@@ -78,8 +78,9 @@ func Run() {
 	participationMethodService := service.NewParticipationMethodService(participationMethodRepository)
 
 	// APIs
-	publicApi := public.NewServer(gameService)
+	publicApi := public.NewServer(db, gameService)
 	adminApi := admin.NewServer(
+		db,
 		gameService,
 		userService,
 		prizeService,

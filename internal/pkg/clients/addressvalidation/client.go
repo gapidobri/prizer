@@ -8,21 +8,25 @@ import (
 	"google.golang.org/genproto/googleapis/type/postaladdress"
 )
 
-type Client struct {
+type Client interface {
+	NormalizeAddress(ctx context.Context, address string) (string, error)
+}
+
+type client struct {
 	client *addressvalidation.Client
 }
 
-func NewClient(ctx context.Context, apiKey string) (*Client, error) {
-	client, err := addressvalidation.NewClient(ctx, option.WithAPIKey(apiKey))
+func NewClient(ctx context.Context, apiKey string) (Client, error) {
+	c, err := addressvalidation.NewClient(ctx, option.WithAPIKey(apiKey))
 	if err != nil {
 		return nil, err
 	}
-	return &Client{
-		client: client,
+	return &client{
+		client: c,
 	}, nil
 }
 
-func (c *Client) NormalizeAddress(ctx context.Context, address string) (string, error) {
+func (c *client) NormalizeAddress(ctx context.Context, address string) (string, error) {
 	request := &addressvalidationpb.ValidateAddressRequest{
 		Address: &postaladdress.PostalAddress{
 			AddressLines: []string{address},

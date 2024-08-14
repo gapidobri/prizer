@@ -6,21 +6,25 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-type Client struct {
+type Client interface {
+	AppendRow(sheetId string, tabName string, values []any) error
+}
+
+type client struct {
 	client *sheets.Service
 }
 
-func NewClient(ctx context.Context, serviceAccountKeyPath string) (*Client, error) {
+func NewClient(ctx context.Context, serviceAccountKeyPath string) (Client, error) {
 	service, err := sheets.NewService(ctx, option.WithCredentialsFile(serviceAccountKeyPath))
 	if err != nil {
 		return nil, err
 	}
-	return &Client{
+	return &client{
 		client: service,
 	}, nil
 }
 
-func (c *Client) AppendRow(sheetId string, tabName string, values []any) error {
+func (c *client) AppendRow(sheetId string, tabName string, values []any) error {
 	_, err := c.client.Spreadsheets.Values.
 		Append(sheetId, tabName, &sheets.ValueRange{
 			MajorDimension: "ROWS",
