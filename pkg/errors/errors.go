@@ -68,6 +68,7 @@ func New(statusCode int, code string, message string) ApiError {
 		internalCode: internalCode.Add(1),
 		statusCode:   statusCode,
 		message:      message,
+		code:         code,
 	}
 }
 
