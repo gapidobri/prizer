@@ -379,44 +379,46 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 
 	// Send lose email
 	if len(wonPrizes) == 0 {
-		template, err := s.mailTemplateRepository.GetMailTemplate(ctx, *participationMethod.LoseMailTemplateId)
-		if err != nil {
-			logger.WithError(err).Error("Failed to get lose mail template")
-			return nil, err
-		}
-
-		var variables []gochimp.Var
-		for key, field := range participationMethod.Fields.User {
-			if field.MailVariable == nil {
-				continue
+		if participationMethod.LoseMailTemplateId != nil && user.Email != nil {
+			template, err := s.mailTemplateRepository.GetMailTemplate(ctx, *participationMethod.LoseMailTemplateId)
+			if err != nil {
+				logger.WithError(err).Error("Failed to get lose mail template")
+				return nil, err
 			}
-			value, exists := additionalUserFields[key]
-			if !exists {
-				continue
-			}
-			variables = append(variables, gochimp.Var{
-				Name:    *field.MailVariable,
-				Content: value,
-			})
-		}
 
-		_, err = s.mandrillClient.MessageSendTemplate(
-			template.Name,
-			[]gochimp.Var{},
-			gochimp.Message{
-				FromEmail:       template.FromEmail,
-				FromName:        template.FromName,
-				Subject:         template.Subject,
-				GlobalMergeVars: variables,
-				To: []gochimp.Recipient{
-					{Email: *user.Email},
+			var variables []gochimp.Var
+			for key, field := range participationMethod.Fields.User {
+				if field.MailVariable == nil {
+					continue
+				}
+				value, exists := additionalUserFields[key]
+				if !exists {
+					continue
+				}
+				variables = append(variables, gochimp.Var{
+					Name:    *field.MailVariable,
+					Content: value,
+				})
+			}
+
+			_, err = s.mandrillClient.MessageSendTemplate(
+				template.Name,
+				[]gochimp.Var{},
+				gochimp.Message{
+					FromEmail:       template.FromEmail,
+					FromName:        template.FromName,
+					Subject:         template.Subject,
+					GlobalMergeVars: variables,
+					To: []gochimp.Recipient{
+						{Email: *user.Email},
+					},
 				},
-			},
-			true,
-		)
-		if err != nil {
-			log.WithError(err).Error("Failed to send lose email")
-			return nil, err
+				true,
+			)
+			if err != nil {
+				log.WithError(err).Error("Failed to send lose email")
+				return nil, err
+			}
 		}
 
 		// Append participation without prize to google sheet
