@@ -121,6 +121,9 @@ table "draw_methods" {
     type = uuid
     default = sql("gen_random_uuid()")
   }
+  column "game_id" {
+    type = uuid
+  }
   column "name" {
     type = varchar
     default = "Draw method"
@@ -135,6 +138,12 @@ table "draw_methods" {
     columns = [
       column.draw_method_id
     ]
+  }
+  foreign_key "game_fk" {
+    columns = [column.game_id]
+    ref_columns = [table.games.column.game_id]
+    on_delete = CASCADE
+    on_update = CASCADE
   }
 }
 

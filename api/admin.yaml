@@ -2,6 +2,25 @@ basePath: /
 consumes:
     - application/json
 definitions:
+    DrawMethod:
+        properties:
+            data:
+                type: string
+            draw_method_id:
+                type: string
+            method:
+                enum:
+                    - first_n
+                    - chance
+                type: string
+            name:
+                type: string
+        required:
+            - draw_method_id
+            - name
+            - method
+            - data
+        type: object
     ErrorResponse:
         properties:
             code:
@@ -56,6 +75,10 @@ definitions:
             - id
             - name
         type: object
+    GetDrawMethodsResponse:
+        items:
+            $ref: '#/definitions/DrawMethod'
+        type: array
     GetGameResponse:
         $ref: '#/definitions/Game'
     GetGamesResponse:
@@ -214,6 +237,36 @@ info:
     title: Prizer Admin API
     version: "1.0"
 paths:
+    /draw-methods:
+        get:
+            operationId: getDrawMethods
+            parameters:
+                - in: query
+                  name: gameId
+                  type: string
+                - in: query
+                  name: participationMethodId
+                  type: string
+            responses:
+                "200":
+                    description: GetDrawMethodsResponse
+                    schema:
+                        $ref: '#/definitions/GetDrawMethodsResponse'
+                "400":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "403":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+                "500":
+                    description: ErrorResponse
+                    schema:
+                        $ref: '#/definitions/ErrorResponse'
+            tags:
+                - admin
+                - drawMethods
     /games:
         get:
             operationId: getGames

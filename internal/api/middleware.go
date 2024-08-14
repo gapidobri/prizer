@@ -48,6 +48,8 @@ func ErrorHandler(c *gin.Context) {
 			errString += "is missing"
 		case "email":
 			errString += "is not a valid email address"
+		case "uuid":
+			errString += "is not a valid UUID"
 		default:
 			errString += fmt.Sprintf("failed on '%s'", err.Tag())
 		}

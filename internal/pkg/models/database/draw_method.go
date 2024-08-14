@@ -1,17 +1,13 @@
 package database
 
-type DrawMethodEnum string
-
-const (
-	DrawMethodFirstN DrawMethodEnum = "first_n"
-	DrawMethodChance DrawMethodEnum = "chance"
-)
+import "github.com/gapidobri/prizer/internal/pkg/models/enums"
 
 type DrawMethod struct {
-	Id     string         `db:"draw_method_id"`
-	Name   string         `db:"name"`
-	Method DrawMethodEnum `db:"method"`
-	Data   string         `db:"data"`
+	Id     string           `db:"draw_method_id"`
+	GameId string           `db:"game_id"`
+	Name   string           `db:"name"`
+	Method enums.DrawMethod `db:"method"`
+	Data   string           `db:"data"`
 }
 
 type DrawMethodChanceData struct {
@@ -23,5 +19,6 @@ type DrawMethodFirstNData struct {
 }
 
 type GetDrawMethodsFilter struct {
+	GameId                *string
 	ParticipationMethodId *string
 }

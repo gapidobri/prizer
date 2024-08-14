@@ -263,7 +263,8 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 	}
 
 	// Participate in all draw methods
-	drawMethods, err := s.drawMethodRepository.GetDrawMethods(ctx, game.Id, dbModels.GetDrawMethodsFilter{
+	drawMethods, err := s.drawMethodRepository.GetDrawMethods(ctx, dbModels.GetDrawMethodsFilter{
+		GameId:                &game.Id,
 		ParticipationMethodId: &participationMethodId,
 	})
 	if err != nil {
@@ -290,10 +291,10 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 		}
 
 		switch drawMethod.Method {
-		case dbModels.DrawMethodFirstN:
+		case enums.DrawMethodFirstN:
 			wonPrizes = append(wonPrizes, prizes[0])
 
-		case dbModels.DrawMethodChance:
+		case enums.DrawMethodChance:
 			var data dbModels.DrawMethodChanceData
 			err = json.Unmarshal([]byte(drawMethod.Data), &data)
 			if err != nil {

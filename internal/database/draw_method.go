@@ -8,7 +8,7 @@ import (
 )
 
 type DrawMethodRepository interface {
-	GetDrawMethods(ctx context.Context, gameId string, filter database.GetDrawMethodsFilter) ([]database.DrawMethod, error)
+	GetDrawMethods(ctx context.Context, filter database.GetDrawMethodsFilter) ([]database.DrawMethod, error)
 }
 
 type drawMethodRepository struct {
@@ -21,16 +21,18 @@ func NewDrawMethodRepository(db *sqlx.DB) DrawMethodRepository {
 	}
 }
 
-func (d *drawMethodRepository) GetDrawMethods(ctx context.Context, gameId string, filter database.GetDrawMethodsFilter) ([]database.DrawMethod, error) {
+func (d *drawMethodRepository) GetDrawMethods(ctx context.Context, filter database.GetDrawMethodsFilter) ([]database.DrawMethod, error) {
 	query := sq.
-		Select("DISTINCT ON (draw_method_id) dm.*").
-		From("participation_methods").
-		InnerJoin("participation_methods_draw_methods USING (participation_method_id)").
-		InnerJoin("draw_methods dm USING (draw_method_id)").
-		Where("game_id = ?", gameId)
+		Select("dm.*").
+		From("draw_methods dm")
 
+	if filter.GameId != nil {
+		query = query.Where(sq.Eq{"dm.game_id": filter.GameId})
+	}
 	if filter.ParticipationMethodId != nil {
-		query = query.Where("participation_method_id = ?", filter.ParticipationMethodId)
+		query = query.
+			InnerJoin("participation_methods_draw_methods USING (draw_method_id)").
+			Where(sq.Eq{"participation_method_id": filter.ParticipationMethodId})
 	}
 
 	sql, args := query.

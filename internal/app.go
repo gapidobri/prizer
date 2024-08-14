@@ -76,6 +76,7 @@ func Run() {
 	prizeService := service.NewPrizeService(prizeRepository)
 	wonPrizeService := service.NewWonPrizeService(wonPrizeRepository)
 	participationMethodService := service.NewParticipationMethodService(participationMethodRepository)
+	drawMethodService := service.NewDrawMethodService(drawMethodRepository)
 
 	// APIs
 	publicApi := public.NewServer(db, gameService)
@@ -86,6 +87,7 @@ func Run() {
 		prizeService,
 		wonPrizeService,
 		participationMethodService,
+		drawMethodService,
 	)
 
 	go publicApi.Run(cfg.Http.Public.Address)

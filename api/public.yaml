@@ -2,6 +2,25 @@ basePath: /
 consumes:
     - application/json
 definitions:
+    DrawMethod:
+        properties:
+            data:
+                type: string
+            draw_method_id:
+                type: string
+            method:
+                enum:
+                    - first_n
+                    - chance
+                type: string
+            name:
+                type: string
+        required:
+            - draw_method_id
+            - name
+            - method
+            - data
+        type: object
     ErrorResponse:
         properties:
             code:
@@ -56,6 +75,10 @@ definitions:
             - id
             - name
         type: object
+    GetDrawMethodsResponse:
+        items:
+            $ref: '#/definitions/DrawMethod'
+        type: array
     GetGameResponse:
         $ref: '#/definitions/Game'
     GetGamesResponse:

@@ -15,6 +15,7 @@ type Server struct {
 	prizeService               *service.PrizeService
 	wonPrizeService            *service.WonPrizeService
 	participationMethodService *service.ParticipationMethodService
+	drawMethodService          *service.DrawMethodService
 }
 
 func NewServer(
@@ -24,6 +25,7 @@ func NewServer(
 	prizeService *service.PrizeService,
 	wonPrizeService *service.WonPrizeService,
 	participationMethodService *service.ParticipationMethodService,
+	drawMethodService *service.DrawMethodService,
 ) *Server {
 	return &Server{
 		engine:                     api.NewServer(db),
@@ -32,6 +34,7 @@ func NewServer(
 		prizeService:               prizeService,
 		wonPrizeService:            wonPrizeService,
 		participationMethodService: participationMethodService,
+		drawMethodService:          drawMethodService,
 	}
 }
 
@@ -41,6 +44,7 @@ func (s *Server) Run(address string) {
 	s.prizeRoutes()
 	s.wonPrizeRoutes()
 	s.participationMethodRoutes()
+	s.drawMethodRoutes()
 
 	log.Infof("Admin API listening on %s", address)
 
