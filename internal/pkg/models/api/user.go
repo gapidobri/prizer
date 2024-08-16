@@ -32,7 +32,7 @@ func UserFromDB(user dbModels.User) User {
 }
 
 type GetUsersFilter struct {
-	GameId *string `form:"gameId" binding:"omitnil,uuid"`
+	GameId *string `form:"game_id" binding:"omitnil,uuid"`
 }
 
 func (f GetUsersFilter) ToDB() dbModels.GetUsersFilter {

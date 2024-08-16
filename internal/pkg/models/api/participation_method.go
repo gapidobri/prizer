@@ -85,7 +85,7 @@ func FieldFromDB(field dbModels.Field) Field {
 }
 
 type GetParticipationMethodsFilter struct {
-	GameId *string `form:"gameId" binding:"omitnil,uuid"`
+	GameId *string `form:"game_id" binding:"omitnil,uuid"`
 }
 
 func (f GetParticipationMethodsFilter) ToDB() dbModels.GetParticipationMethodsFilter {

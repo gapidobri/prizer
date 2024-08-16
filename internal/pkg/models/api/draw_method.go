@@ -34,8 +34,8 @@ func DrawMethodFromDB(drawMethod dbModels.DrawMethod) DrawMethod {
 }
 
 type GetDrawMethodsFilter struct {
-	GameId          *string `form:"gameId" binding:"omitnil,uuid"`
-	ParticipationId *string `form:"participationId" binding:"omitnil,uuid"`
+	GameId          *string `form:"game_id" binding:"omitnil,uuid"`
+	ParticipationId *string `form:"participation_id" binding:"omitnil,uuid"`
 }
 
 func (f GetDrawMethodsFilter) ToDB() dbModels.GetDrawMethodsFilter {

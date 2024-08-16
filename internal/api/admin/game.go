@@ -41,7 +41,7 @@ func (s *Server) gameRoutes() {
 	//   500: ErrorResponse
 	//
 	gamesGroup.GET(":gameId", func(c *gin.Context) {
-		response, err := s.gameService.GetGame(c.Request.Context(), c.Param("gameId"))
+		response, err := s.gameService.GetGame(c.Request.Context(), c.Param("game_id"))
 		if err != nil {
 			_ = c.Error(err)
 			return

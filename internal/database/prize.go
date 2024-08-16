@@ -2,14 +2,19 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
+	er "github.com/gapidobri/prizer/internal/pkg/errors"
 	"github.com/gapidobri/prizer/internal/pkg/models/database"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 type PrizeRepository interface {
 	GetPrizes(ctx context.Context, filter database.GetPrizesFilter) ([]database.Prize, error)
+	CreatePrize(ctx context.Context, prize database.CreatePrize) error
+	DeletePrize(ctx context.Context, prizeId string) error
 }
 
 type prizeRepository struct {
@@ -22,10 +27,12 @@ func NewPrizeRepository(db *sqlx.DB) PrizeRepository {
 	}
 }
 
-func (p *prizeRepository) GetPrizes(ctx context.Context, filter database.GetPrizesFilter) ([]database.Prize, error) {
+func (r *prizeRepository) GetPrizes(ctx context.Context, filter database.GetPrizesFilter) ([]database.Prize, error) {
 	query := sq.
-		Select("p.*").
-		From("prizes p")
+		Select("p.*, COUNT(wp.prize_id) AS won_count").
+		From("prizes p").
+		LeftJoin("won_prizes wp USING (prize_id)").
+		GroupBy("p.prize_id")
 
 	if filter.GameId != nil {
 		query = query.Where("game_id = ?", filter.GameId)
@@ -46,24 +53,47 @@ func (p *prizeRepository) GetPrizes(ctx context.Context, filter database.GetPriz
 			subQuery = subQuery.Where("draw_method_id = ?", filter.DrawMethodId)
 		}
 
-		sql, args, err := subQuery.ToSql()
+		sqlQ, args, err := subQuery.ToSql()
 		if err != nil {
 			return nil, err
 		}
 
-		query = query.Where(fmt.Sprintf("p.count > (%s)", sql), args...)
+		query = query.Where(fmt.Sprintf("p.count > (%s)", sqlQ), args...)
 	}
 
-	sql, args, err := query.PlaceholderFormat(sq.Dollar).ToSql()
+	sqlQ, args, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
 		return nil, err
 	}
 
 	var prizes []database.Prize
-	err = p.db.SelectContext(ctx, &prizes, sql, args...)
+	err = r.db.SelectContext(ctx, &prizes, sqlQ, args...)
 	if err != nil {
 		return nil, err
 	}
 
 	return prizes, nil
+}
+
+func (r *prizeRepository) CreatePrize(ctx context.Context, prize database.CreatePrize) error {
+	_, err := r.db.NamedExecContext(ctx, `
+		INSERT INTO prizes (game_id, name, description, image_url, count)
+		VALUES (:game_id, :name, :description, :image_url, :count)
+	`, prize)
+	return err
+}
+
+func (r *prizeRepository) DeletePrize(ctx context.Context, prizeId string) error {
+	_, err := r.db.ExecContext(ctx, `
+		DELETE FROM prizes
+	       WHERE prize_id = $1
+	`, prizeId)
+	switch {
+	case err == nil:
+		return nil
+	case errors.Is(err, sql.ErrNoRows):
+		return er.PrizeNotFound
+	default:
+		return err
+	}
 }

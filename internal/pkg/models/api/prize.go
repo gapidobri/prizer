@@ -26,7 +26,52 @@ type Prize struct {
 	Id string `json:"id"`
 
 	// required: true
-	GameId string `json:"gameId"`
+	GameId string `json:"game_id"`
+
+	// required: true
+	Name string `json:"name"`
+
+	// required: true
+	Description string `json:"description"`
+
+	ImageUrl *string `json:"image_url"`
+
+	// required: true
+	Count int `json:"count"`
+
+	// required: true
+	WonCount int `json:"won_count"`
+}
+
+func PrizeFromDB(prize dbModels.Prize) Prize {
+	return Prize{
+		Id:          prize.Id,
+		GameId:      prize.GameId,
+		Name:        prize.Name,
+		Description: prize.Description,
+		ImageUrl:    prize.ImageUrl,
+		Count:       prize.Count,
+		WonCount:    prize.WonCount,
+	}
+}
+
+// swagger:model GetPrizesResponse
+type GetPrizesResponse []Prize
+
+type GetPrizesFilter struct {
+	GameId *string `form:"game_id" binding:"omitnil,uuid"`
+}
+
+func (f GetPrizesFilter) ToDB() dbModels.GetPrizesFilter {
+	return dbModels.GetPrizesFilter{
+		GameId: f.GameId,
+	}
+}
+
+// swagger:model CreatePrizeRequest
+type CreatePrizeRequest struct {
+	// required: true
+	GameId string `json:"game_id"`
 
 	// required: true
 	Name string `json:"name"`
@@ -40,26 +85,12 @@ type Prize struct {
 	Count int `json:"count"`
 }
 
-func PrizeFromDB(prize dbModels.Prize) Prize {
-	return Prize{
-		Id:          prize.Id,
-		GameId:      prize.GameId,
-		Name:        prize.Name,
-		Description: prize.Description,
-		ImageUrl:    prize.ImageUrl,
-		Count:       prize.Count,
-	}
-}
-
-// swagger:model GetPrizesResponse
-type GetPrizesResponse []Prize
-
-type GetPrizesFilter struct {
-	GameId *string `form:"gameId" binding:"omitnil,uuid"`
-}
-
-func (f GetPrizesFilter) ToDB() dbModels.GetPrizesFilter {
-	return dbModels.GetPrizesFilter{
-		GameId: f.GameId,
+func (r CreatePrizeRequest) ToDB() dbModels.CreatePrize {
+	return dbModels.CreatePrize{
+		GameId:      r.GameId,
+		Name:        r.Name,
+		Description: r.Description,
+		ImageUrl:    r.ImageUrl,
+		Count:       r.Count,
 	}
 }
