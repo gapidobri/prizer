@@ -69,6 +69,42 @@ func (s *Server) prizeRoutes() {
 		c.JSON(http.StatusCreated, prize)
 	})
 
+	// swagger:route PUT /prizes/{prizeId} admin prizes updatePrize
+	//
+	// parameters:
+	//   + name: prizeId
+	//     in: path
+	//     type: string
+	//     required: true
+	//   + name: body
+	//     in: body
+	//     type: UpdatePrizeRequest
+	//
+	// responses:
+	//   204: EmptyResponse
+	//   400: ErrorResponse
+	//   403: ErrorResponse
+	//   500: ErrorResponse
+	//
+	group.PUT(":prizeId", func(c *gin.Context) {
+		prizeId := c.Param("prizeId")
+
+		var prize api.UpdatePrizeRequest
+		err := c.ShouldBindJSON(&prize)
+		if err != nil {
+			_ = c.Error(err)
+			return
+		}
+
+		err = s.prizeService.UpdatePrize(c.Request.Context(), prizeId, prize)
+		if err != nil {
+			_ = c.Error(err)
+			return
+		}
+
+		c.Status(http.StatusNoContent)
+	})
+
 	// swagger:route DELETE /prizes/{prizeId} admin prizes deletePrize
 	//
 	// parameters:
@@ -92,6 +128,6 @@ func (s *Server) prizeRoutes() {
 			return
 		}
 
-		c.JSON(http.StatusNoContent, nil)
+		c.Status(http.StatusNoContent)
 	})
 }

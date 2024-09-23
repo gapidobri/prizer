@@ -30,7 +30,7 @@ type ParticipationMethod struct {
 	Name string `json:"name"`
 
 	// required: true
-	Limit enums.ParticipationLimit `json:"limit"`
+	ParticipationLimit enums.ParticipationLimit `json:"participation_limit"`
 
 	// required: true
 	Fields FieldConfig `json:"fields"`
@@ -38,11 +38,11 @@ type ParticipationMethod struct {
 
 func ParticipationMethodFromDB(method dbModels.ParticipationMethod) ParticipationMethod {
 	return ParticipationMethod{
-		Id:     method.Id,
-		GameId: method.GameId,
-		Name:   method.Name,
-		Limit:  method.Limit,
-		Fields: FieldConfigFromDB(method.Fields),
+		Id:                 method.Id,
+		GameId:             method.GameId,
+		Name:               method.Name,
+		ParticipationLimit: method.ParticipationLimit,
+		Fields:             FieldConfigFromDB(method.Fields),
 	}
 }
 
@@ -52,6 +52,17 @@ type FieldConfig struct {
 
 	// required: true
 	Participation map[string]Field `json:"participation"`
+}
+
+func (config FieldConfig) ToDB() dbModels.FieldConfig {
+	return dbModels.FieldConfig{
+		User: lo.MapValues(config.User, func(field Field, key string) dbModels.Field {
+			return field.ToDB()
+		}),
+		Participation: lo.MapValues(config.Participation, func(field Field, key string) dbModels.Field {
+			return field.ToDB()
+		}),
+	}
 }
 
 func FieldConfigFromDB(config dbModels.FieldConfig) FieldConfig {
@@ -76,6 +87,14 @@ type Field struct {
 	Unique bool `json:"unique"`
 }
 
+func (f Field) ToDB() dbModels.Field {
+	return dbModels.Field{
+		Type:     f.Type,
+		Required: f.Required,
+		Unique:   f.Unique,
+	}
+}
+
 func FieldFromDB(field dbModels.Field) Field {
 	return Field{
 		Type:     field.Type,
@@ -96,3 +115,29 @@ func (f GetParticipationMethodsFilter) ToDB() dbModels.GetParticipationMethodsFi
 
 // swagger:model GetParticipationMethodsResponse
 type GetParticipationMethodsResponse []ParticipationMethod
+
+// swagger:model UpdateParticipationMethodRequest
+type UpdateParticipationMethodRequest struct {
+	// required: true
+	Name string `json:"name" binding:"required"`
+
+	// required: true
+	ParticipationLimit enums.ParticipationLimit `json:"participation_limit" binding:"required,oneof=none daily"`
+
+	// required: true
+	Fields FieldConfig `json:"fields"`
+
+	WinMailTemplateId *string `json:"win_mail_template_id" binding:"omitnil,uuid"`
+
+	LoseMailTemplateId *string `json:"lose_mail_template_id" binding:"omitnil,uuid"`
+}
+
+func (r UpdateParticipationMethodRequest) ToDB() dbModels.UpdateParticipationMethod {
+	return dbModels.UpdateParticipationMethod{
+		Name:               r.Name,
+		ParticipationLimit: r.ParticipationLimit,
+		Fields:             r.Fields.ToDB(),
+		WinMailTemplateId:  r.WinMailTemplateId,
+		LoseMailTemplateId: r.LoseMailTemplateId,
+	}
+}

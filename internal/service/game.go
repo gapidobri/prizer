@@ -229,7 +229,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 	logger = logger.WithField("userId", user.Id)
 
 	// Check if user can participate
-	switch participationMethod.Limit {
+	switch participationMethod.ParticipationLimit {
 	case enums.ParticipationLimitNone:
 		break
 	case enums.ParticipationLimitDaily:
