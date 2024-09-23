@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"github.com/gapidobri/prizer/internal/database"
+	er "github.com/gapidobri/prizer/internal/pkg/errors"
 	"github.com/gapidobri/prizer/internal/pkg/models/api"
 	dbModels "github.com/gapidobri/prizer/internal/pkg/models/database"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
 
@@ -33,4 +35,41 @@ func (s *ParticipationMethodService) GetParticipationMethods(
 		return api.ParticipationMethodFromDB(participationMethod)
 	})
 	return apiParticipationMethods, nil
+}
+
+func (s *ParticipationMethodService) UpdateParticipationMethod(
+	ctx context.Context,
+	participationMethodId string,
+	participationMethod api.UpdateParticipationMethodRequest,
+) error {
+	err := uuid.Validate(participationMethodId)
+	if err != nil {
+		return er.InvalidUuid
+	}
+
+	return s.participationMethodRepository.UpdateParticipationMethod(ctx, participationMethodId, participationMethod.ToDB())
+}
+
+func (s *ParticipationMethodService) LinkDrawMethod(ctx context.Context, participationMethodId string, drawMethodId string) error {
+	err := uuid.Validate(participationMethodId)
+	if err != nil {
+		return er.InvalidUuid
+	}
+	err = uuid.Validate(drawMethodId)
+	if err != nil {
+		return er.InvalidUuid
+	}
+	return s.LinkDrawMethod(ctx, participationMethodId, drawMethodId)
+}
+
+func (s *ParticipationMethodService) UnlinkDrawMethod(ctx context.Context, participationMethodId string, drawMethodId string) error {
+	err := uuid.Validate(participationMethodId)
+	if err != nil {
+		return er.InvalidUuid
+	}
+	err = uuid.Validate(drawMethodId)
+	if err != nil {
+		return er.InvalidUuid
+	}
+	return s.UnlinkDrawMethod(ctx, participationMethodId, drawMethodId)
 }

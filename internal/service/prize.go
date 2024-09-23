@@ -35,6 +35,14 @@ func (s *PrizeService) CreatePrize(ctx context.Context, prize api.CreatePrizeReq
 	return s.prizeRepository.CreatePrize(ctx, prize.ToDB())
 }
 
+func (s *PrizeService) UpdatePrize(ctx context.Context, prizeId string, prize api.UpdatePrizeRequest) error {
+	err := uuid.Validate(prizeId)
+	if err != nil {
+		return er.InvalidUuid
+	}
+	return s.prizeRepository.UpdatePrize(ctx, prizeId, prize.ToDB())
+}
+
 func (s *PrizeService) DeletePrize(ctx context.Context, prizeId string) error {
 	err := uuid.Validate(prizeId)
 	if err != nil {

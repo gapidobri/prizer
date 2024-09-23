@@ -11,7 +11,7 @@ type ParticipationMethod struct {
 	Id                 string                   `db:"participation_method_id"`
 	GameId             string                   `db:"game_id"`
 	Name               string                   `db:"name"`
-	Limit              enums.ParticipationLimit `db:"limit"`
+	ParticipationLimit enums.ParticipationLimit `db:"participation_limit"`
 	Fields             FieldConfig              `db:"fields"`
 	WinMailTemplateId  *string                  `db:"win_mail_template_id"`
 	LoseMailTemplateId *string                  `db:"lose_mail_template_id"`
@@ -43,4 +43,12 @@ type Field struct {
 
 type GetParticipationMethodsFilter struct {
 	GameId *string
+}
+
+type UpdateParticipationMethod struct {
+	Name               string                   `mapstructure:"name"`
+	ParticipationLimit enums.ParticipationLimit `mapstructure:"participation_limit"`
+	Fields             FieldConfig              `mapstructure:"-"`
+	WinMailTemplateId  *string                  `mapstructure:"win_mail_template_id"`
+	LoseMailTemplateId *string                  `mapstructure:"lose_mail_template_id"`
 }

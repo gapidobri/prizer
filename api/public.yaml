@@ -18,7 +18,6 @@ definitions:
         required:
             - game_id
             - name
-            - description
             - count
         type: object
     DrawMethod:
@@ -152,18 +151,18 @@ definitions:
                 type: string
             id:
                 type: string
-            limit:
+            name:
+                type: string
+            participation_limit:
                 enum:
                     - none
                     - daily
-                type: string
-            name:
                 type: string
         required:
             - id
             - game_id
             - name
-            - limit
+            - participation_limit
             - fields
         type: object
     ParticipationRequest:
@@ -205,7 +204,6 @@ definitions:
             - id
             - game_id
             - name
-            - description
             - count
             - won_count
         type: object
@@ -219,7 +217,38 @@ definitions:
                 type: string
         required:
             - name
-            - description
+        type: object
+    UpdateParticipationMethodRequest:
+        properties:
+            fields:
+                $ref: '#/definitions/FieldConfig'
+            lose_mail_template_id:
+                type: string
+            name:
+                type: string
+            participation_limit:
+                enum:
+                    - none
+                    - daily
+                type: string
+            win_mail_template_id:
+                type: string
+        required:
+            - name
+            - participation_limit
+            - fields
+        type: object
+    UpdatePrizeRequest:
+        properties:
+            count:
+                format: int64
+                type: integer
+            description:
+                type: string
+            image_url:
+                type: string
+            name:
+                type: string
         type: object
     User:
         properties:

@@ -19,9 +19,9 @@ var (
 		Id: "049fce3d-46d6-4dbf-ad70-3b93e98e6d58",
 	}
 	participationMethod = dbModels.ParticipationMethod{
-		Id:     "3ef7669-0179-4347-895a-cb8b045f74f8",
-		GameId: game.Id,
-		Limit:  enums.ParticipationLimitNone,
+		Id:                 "3ef7669-0179-4347-895a-cb8b045f74f8",
+		GameId:             game.Id,
+		ParticipationLimit: enums.ParticipationLimitNone,
 		Fields: dbModels.FieldConfig{
 			User: map[string]dbModels.Field{
 				"name": {
