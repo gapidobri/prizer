@@ -343,6 +343,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 			variables := []gochimp.Var{
 				{Name: "PRIZE_NAME", Content: prize.Name},
 				{Name: "PRIZE_DESCRIPTION", Content: prize.Description},
+				{Name: "PRIZE_IMAGE_URL", Content: prize.ImageUrl},
 			}
 
 			for key, field := range participationMethod.Fields.User {
