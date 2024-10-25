@@ -155,6 +155,10 @@ table "draw_methods_prizes" {
   column "prize_id" {
     type = uuid
   }
+  column "user_prize_limit" {
+    type = integer
+    null = true
+  }
   primary_key {
     columns = [
       column.draw_method_id,

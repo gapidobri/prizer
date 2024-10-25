@@ -51,14 +51,36 @@ func (r *prizeRepository) GetPrizes(ctx context.Context, filter database.GetPriz
 
 		if filter.DrawMethodId != nil {
 			subQuery = subQuery.Where("draw_method_id = ?", filter.DrawMethodId)
+
+			sqlQ, args, err := subQuery.ToSql()
+			if err != nil {
+				return nil, err
+			}
+
+			query = query.Where(fmt.Sprintf("p.count > (%s)", sqlQ), args...)
+
+			if filter.UserId != nil {
+				userPrizeLimitQuery := sq.
+					Select("prize_id").
+					From("won_prizes").
+					InnerJoin("participations USING (participation_id)").
+					InnerJoin("draw_methods_prizes USING (prize_id)").
+					Where(sq.Eq{
+						"user_id":        filter.UserId,
+						"draw_method_id": filter.DrawMethodId,
+					}).
+					GroupBy("prize_id", "user_prize_limit").
+					Having("COUNT(prize_id) >= user_prize_limit")
+
+				sqlQ, args, err = userPrizeLimitQuery.ToSql()
+				if err != nil {
+					return nil, err
+				}
+
+				query = query.Where(fmt.Sprintf("p.prize_id NOT IN (%s)", sqlQ), args...)
+			}
 		}
 
-		sqlQ, args, err := subQuery.ToSql()
-		if err != nil {
-			return nil, err
-		}
-
-		query = query.Where(fmt.Sprintf("p.count > (%s)", sqlQ), args...)
 	}
 
 	sqlQ, args, err := query.PlaceholderFormat(sq.Dollar).ToSql()
