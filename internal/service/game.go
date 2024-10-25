@@ -279,6 +279,7 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 		prizes, err = s.prizeRepository.GetPrizes(ctx, dbModels.GetPrizesFilter{
 			GameId:        &game.Id,
 			DrawMethodId:  &drawMethod.Id,
+			UserId:        &user.Id,
 			AvailableOnly: true,
 		})
 		if err != nil {
