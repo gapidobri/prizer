@@ -115,18 +115,8 @@ func (r *userRepository) CreateUser(ctx context.Context, create database.CreateU
 		From("users").
 		Where(sq.Eq{"game_id": create.GameId})
 
-	or := sq.Or{}
 	if create.Email != nil {
-		or = append(or, sq.Eq{"email": *create.Email})
-	}
-	if create.Address != nil {
-		or = append(or, sq.Eq{"address": *create.Address})
-	}
-	if create.Phone != nil {
-		or = append(or, sq.Eq{"phone": *create.Phone})
-	}
-	if len(or) > 0 {
-		query = query.Where(or)
+		query = query.Where(sq.Eq{"email": *create.Email})
 	}
 
 	sqlQ, args, err := query.PlaceholderFormat(sq.Dollar).ToSql()
