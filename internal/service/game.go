@@ -206,7 +206,9 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 	}
 
 	// Get / create user
-	user, err := s.userRepository.GetUserFromFields(ctx, game.Id, uniqueFields)
+	user, err := s.userRepository.GetUserFromFields(ctx, game.Id, dbModels.UserFields{
+		Email: uniqueFields.Email,
+	})
 	switch {
 	case err == nil:
 		break
