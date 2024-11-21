@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/gapidobri/prizer/internal/database"
 	"github.com/gapidobri/prizer/internal/pkg/clients/addressvalidation"
@@ -16,6 +15,7 @@ import (
 	"github.com/gapidobri/prizer/internal/pkg/util"
 	"github.com/google/uuid"
 	"github.com/mattbaird/gochimp"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
@@ -205,31 +205,16 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 		}
 	}
 
-	// Get / create user
-	user, err := s.userRepository.GetUserFromFields(ctx, game.Id, dbModels.UserFields{
-		Email: uniqueFields.Email,
-	})
-	switch {
-	case err == nil:
-		break
-	case errors.Is(err, er.UserNotFound):
-		user, err = s.userRepository.CreateUser(ctx, dbModels.CreateUser{
-			GameId:           game.Id,
-			UserFields:       userFields,
-			AdditionalFields: additionalUserFields,
-		})
-		if err != nil {
-			logger.WithError(err).Error("Failed to create user")
-			return nil, err
-		}
-	default:
+	user, err := s.getCreateUser(ctx, game, userFields, uniqueFields, additionalUserFields)
+	if err != nil {
+		logger.WithError(err).Error("Failed to get/create user")
 		return nil, err
 	}
 
 	logger = logger.WithField("userId", user.Id)
 
 	// Check if user can participate
-	switch participationMethod.Limit {
+	switch participationMethod.ParticipationLimit {
 	case enums.ParticipationLimitNone:
 		break
 	case enums.ParticipationLimitDaily:
@@ -264,55 +249,10 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 		}
 	}
 
-	// Participate in all draw methods
-	drawMethods, err := s.drawMethodRepository.GetDrawMethods(ctx, dbModels.GetDrawMethodsFilter{
-		GameId:                &game.Id,
-		ParticipationMethodId: &participationMethodId,
-	})
+	wonPrizes, err := s.drawPrizes(ctx, user, game, participationMethodId)
 	if err != nil {
-		logger.WithError(err).Error("Failed to get draw methods")
+		logger.WithError(err).Error("Failed to draw prizes")
 		return nil, err
-	}
-
-	var wonPrizes []dbModels.Prize
-
-	for _, drawMethod := range drawMethods {
-		var prizes []dbModels.Prize
-		prizes, err = s.prizeRepository.GetPrizes(ctx, dbModels.GetPrizesFilter{
-			GameId:        &game.Id,
-			DrawMethodId:  &drawMethod.Id,
-			UserId:        &user.Id,
-			AvailableOnly: true,
-		})
-		if err != nil {
-			logger.WithError(err).Error("Failed to get prizes")
-			return nil, err
-		}
-
-		if len(prizes) == 0 {
-			continue
-		}
-
-		switch drawMethod.Method {
-		case enums.DrawMethodFirstN:
-			wonPrizes = append(wonPrizes, prizes[0])
-
-		case enums.DrawMethodChance:
-			var data dbModels.DrawMethodChanceData
-			err = json.Unmarshal([]byte(drawMethod.Data), &data)
-			if err != nil {
-				logger.WithError(err).Error("Failed to unmarshal draw method chance data")
-				return nil, err
-			}
-
-			if data.Chance <= rand.Float64() {
-				continue
-			}
-
-			prize := prizes[rand.Intn(len(prizes))]
-
-			wonPrizes = append(wonPrizes, prize)
-		}
 	}
 
 	participation, err := s.participationRepository.CreateParticipation(ctx, dbModels.CreateParticipation{
@@ -322,6 +262,12 @@ func (s *GameService) Participate(ctx context.Context, participationMethodId str
 	})
 	if err != nil {
 		logger.WithError(err).Error("Failed to create participation")
+		return nil, err
+	}
+
+	err = s.sendParticipationEmail(ctx, participationMethod, user, additionalUserFields)
+	if err != nil {
+		logger.WithError(err).Error("Failed to send participation email")
 		return nil, err
 	}
 
@@ -465,6 +411,130 @@ func (s *GameService) validateField(field dbModels.Field, key string, value any)
 	default:
 		return nil, er.BadRequest.With(fmt.Sprintf("Field %s is not a valid field", key))
 	}
+}
+
+func (s *GameService) getCreateUser(
+	ctx context.Context,
+	game *dbModels.Game,
+	userFields dbModels.UserFields,
+	uniqueFields dbModels.UserFields,
+	additionalUserFields dbModels.JsonMap,
+) (*dbModels.User, error) {
+	user, err := s.userRepository.GetUserFromFields(ctx, game.Id, dbModels.UserFields{
+		Email: uniqueFields.Email,
+	})
+	switch {
+	case err == nil:
+		break
+	case errors.Is(err, er.UserNotFound):
+		user, err = s.userRepository.CreateUser(ctx, dbModels.CreateUser{
+			GameId:           game.Id,
+			UserFields:       userFields,
+			AdditionalFields: additionalUserFields,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create user")
+		}
+	default:
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *GameService) drawPrizes(ctx context.Context, user *dbModels.User, game *dbModels.Game, participationMethodId string) ([]dbModels.Prize, error) {
+	drawMethods, err := s.drawMethodRepository.GetDrawMethods(ctx, dbModels.GetDrawMethodsFilter{
+		GameId:                &game.Id,
+		ParticipationMethodId: &participationMethodId,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to get draw methods")
+	}
+
+	var wonPrizes []dbModels.Prize
+
+	for _, drawMethod := range drawMethods {
+		var prizes []dbModels.Prize
+		prizes, err = s.prizeRepository.GetPrizes(ctx, dbModels.GetPrizesFilter{
+			GameId:        &game.Id,
+			DrawMethodId:  &drawMethod.Id,
+			UserId:        &user.Id,
+			AvailableOnly: true,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get prizes")
+		}
+
+		if len(prizes) == 0 {
+			continue
+		}
+
+		switch drawMethod.Method {
+		case enums.DrawMethodFirstN:
+			wonPrizes = append(wonPrizes, prizes[0])
+
+		case enums.DrawMethodChance:
+			var data dbModels.DrawMethodChanceData
+			err = json.Unmarshal([]byte(drawMethod.Data), &data)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to unmarshal draw method chance data")
+			}
+
+			if data.Chance <= rand.Float64() {
+				continue
+			}
+
+			prize := prizes[rand.Intn(len(prizes))]
+
+			wonPrizes = append(wonPrizes, prize)
+		}
+	}
+
+	return wonPrizes, nil
+}
+
+func (s *GameService) sendParticipationEmail(ctx context.Context, participationMethod *dbModels.ParticipationMethod, user *dbModels.User, fields dbModels.JsonMap) error {
+	if participationMethod.ParticipationMailTemplateId == nil || user.Email == nil {
+		return nil
+	}
+
+	template, err := s.mailTemplateRepository.GetMailTemplate(ctx, *participationMethod.ParticipationMailTemplateId)
+	if err != nil {
+		return errors.Wrap(err, "failed to get participation mail template")
+	}
+
+	var variables []gochimp.Var
+	for key, field := range participationMethod.Fields.User {
+		if field.MailVariable == nil {
+			continue
+		}
+		value, exists := fields[key]
+		if !exists {
+			continue
+		}
+		variables = append(variables, gochimp.Var{
+			Name:    *field.MailVariable,
+			Content: value,
+		})
+	}
+
+	err = s.mandrillClient.SendTemplate(
+		template.Name,
+		gochimp.Message{
+			FromEmail:       template.FromEmail,
+			FromName:        template.FromName,
+			Subject:         template.Subject,
+			GlobalMergeVars: variables,
+			To: []gochimp.Recipient{
+				{Email: *user.Email},
+			},
+		},
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed to send lose email")
+	}
+
+	return nil
 }
 
 func (s *GameService) appendRowToGoogleSheets(

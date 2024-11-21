@@ -8,13 +8,14 @@ import (
 )
 
 type ParticipationMethod struct {
-	Id                 string                   `db:"participation_method_id"`
-	GameId             string                   `db:"game_id"`
-	Name               string                   `db:"name"`
-	Limit              enums.ParticipationLimit `db:"limit"`
-	Fields             FieldConfig              `db:"fields"`
-	WinMailTemplateId  *string                  `db:"win_mail_template_id"`
-	LoseMailTemplateId *string                  `db:"lose_mail_template_id"`
+	Id                          string                   `db:"participation_method_id"`
+	GameId                      string                   `db:"game_id"`
+	Name                        string                   `db:"name"`
+	ParticipationLimit          enums.ParticipationLimit `db:"participation_limit"`
+	Fields                      FieldConfig              `db:"fields"`
+	WinMailTemplateId           *string                  `db:"win_mail_template_id"`
+	LoseMailTemplateId          *string                  `db:"lose_mail_template_id"`
+	ParticipationMailTemplateId *string                  `db:"participation_mail_template_id"`
 }
 
 type FieldConfig struct {
@@ -43,4 +44,13 @@ type Field struct {
 
 type GetParticipationMethodsFilter struct {
 	GameId *string
+}
+
+type UpdateParticipationMethod struct {
+	Name                        string                   `mapstructure:"name"`
+	ParticipationLimit          enums.ParticipationLimit `mapstructure:"participation_limit"`
+	Fields                      FieldConfig              `mapstructure:"-"`
+	WinMailTemplateId           *string                  `mapstructure:"win_mail_template_id"`
+	LoseMailTemplateId          *string                  `mapstructure:"lose_mail_template_id"`
+	ParticipationMailTemplateId *string                  `mapstructure:"participation_mail_template_id"`
 }

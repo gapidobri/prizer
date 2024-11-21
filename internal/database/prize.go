@@ -7,6 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	er "github.com/gapidobri/prizer/internal/pkg/errors"
 	"github.com/gapidobri/prizer/internal/pkg/models/database"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 )
@@ -14,6 +15,7 @@ import (
 type PrizeRepository interface {
 	GetPrizes(ctx context.Context, filter database.GetPrizesFilter) ([]database.Prize, error)
 	CreatePrize(ctx context.Context, prize database.CreatePrize) error
+	UpdatePrize(ctx context.Context, prizeId string, prize database.UpdatePrize) error
 	DeletePrize(ctx context.Context, prizeId string) error
 }
 
@@ -102,6 +104,27 @@ func (r *prizeRepository) CreatePrize(ctx context.Context, prize database.Create
 		INSERT INTO prizes (game_id, name, description, image_url, count)
 		VALUES (:game_id, :name, :description, :image_url, :count)
 	`, prize)
+	return err
+}
+
+func (r *prizeRepository) UpdatePrize(ctx context.Context, prizeId string, prize database.UpdatePrize) error {
+	var setMap map[string]interface{}
+	err := mapstructure.Decode(prize, &setMap)
+	if err != nil {
+		return err
+	}
+
+	query := sq.
+		Update("prizes").
+		Where(sq.Eq{"prize_id": prizeId}).
+		SetMap(setMap)
+
+	sqlQ, args, err := query.PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.ExecContext(ctx, sqlQ, args...)
 	return err
 }
 

@@ -6,8 +6,7 @@ type PublicPrize struct {
 	// required: true
 	Name string `json:"name"`
 
-	// required: true
-	Description string `json:"description"`
+	Description *string `json:"description"`
 
 	ImageUrl *string `json:"image_url"`
 }
@@ -31,8 +30,7 @@ type Prize struct {
 	// required: true
 	Name string `json:"name"`
 
-	// required: true
-	Description string `json:"description"`
+	Description *string `json:"description"`
 
 	ImageUrl *string `json:"image_url"`
 
@@ -68,21 +66,37 @@ func (f GetPrizesFilter) ToDB() dbModels.GetPrizesFilter {
 	}
 }
 
+// swagger:model UpdatePrizeRequest
+type UpdatePrizeRequest struct {
+	Name        string  `json:"name" binding:"required"`
+	Description *string `json:"description"`
+	ImageUrl    *string `json:"image_url" binding:"omitempty,url"`
+	Count       int     `json:"count" binding:"required,number"`
+}
+
+func (r UpdatePrizeRequest) ToDB() dbModels.UpdatePrize {
+	return dbModels.UpdatePrize{
+		Name:        r.Name,
+		Description: r.Description,
+		ImageUrl:    r.ImageUrl,
+		Count:       r.Count,
+	}
+}
+
 // swagger:model CreatePrizeRequest
 type CreatePrizeRequest struct {
 	// required: true
-	GameId string `json:"game_id"`
+	GameId string `json:"game_id" binding:"required,uuid"`
 
 	// required: true
-	Name string `json:"name"`
+	Name string `json:"name" binding:"required"`
+
+	Description *string `json:"description"`
+
+	ImageUrl *string `json:"image_url" binding:"omitempty,url"`
 
 	// required: true
-	Description string `json:"description"`
-
-	ImageUrl *string `json:"image_url"`
-
-	// required: true
-	Count int `json:"count"`
+	Count int `json:"count" binding:"required,number"`
 }
 
 func (r CreatePrizeRequest) ToDB() dbModels.CreatePrize {

@@ -42,7 +42,7 @@ table "participation_methods" {
   column "name" {
     type = varchar
   }
-  column "limit" {
+  column "participation_limit" {
     type = enum.participation_limit
     default = "none"
   }
@@ -57,6 +57,10 @@ table "participation_methods" {
     type = uuid
     null = true
   }
+  column "participation_mail_template_id" {
+    type = uuid
+    null = true
+  }
   primary_key {
     columns = [
       column.participation_method_id
@@ -65,19 +69,25 @@ table "participation_methods" {
   foreign_key "game_fk" {
     columns = [column.game_id]
     ref_columns = [table.games.column.game_id]
-    on_delete = CASCADE
+    on_delete = RESTRICT
     on_update = CASCADE
   }
   foreign_key "win_mail_template_fk" {
     columns = [column.win_mail_template_id]
     ref_columns = [table.mail_templates.column.mail_template_id]
-    on_delete = CASCADE
+    on_delete = SET_NULL
     on_update = CASCADE
   }
   foreign_key "lose_mail_template_fk" {
     columns = [column.lose_mail_template_id]
     ref_columns = [table.mail_templates.column.mail_template_id]
-    on_delete = CASCADE
+    on_delete = SET_NULL
+    on_update = CASCADE
+  }
+  foreign_key "participation_mail_template_fk" {
+    columns = [column.participation_mail_template_id]
+    ref_columns = [table.mail_templates.column.mail_template_id]
+    on_delete = SET_NULL
     on_update = CASCADE
   }
 }
@@ -194,6 +204,7 @@ table "prizes" {
   }
   column "description" {
     type = varchar
+    null = true
   }
   column "image_url" {
     type = varchar
@@ -233,7 +244,7 @@ table "won_prizes" {
   foreign_key "prize_fk" {
     columns = [column.prize_id]
     ref_columns = [table.prizes.column.prize_id]
-    on_delete = CASCADE
+    on_delete = RESTRICT
     on_update = CASCADE
   }
   foreign_key "participation_fk" {
@@ -316,7 +327,7 @@ table "participations" {
   foreign_key "participation_method_fk" {
     columns = [column.participation_method_id]
     ref_columns = [table.participation_methods.column.participation_method_id]
-    on_delete = CASCADE
+    on_delete = RESTRICT
     on_update = CASCADE
   }
   foreign_key "user_fk" {
