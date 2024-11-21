@@ -24,8 +24,8 @@ func WonPrizeFromDB(wonPrize dbModels.WonPrize) WonPrize {
 
 type GetWonPrizesFilter struct {
 	GameId  *string `form:"game_id" binding:"omitnil,uuid"`
-	UserId  *string `form:"userId" binding:"omitnil,uuid"`
-	PrizeId *string `form:"prizeId" binding:"omitnil,uuid"`
+	UserId  *string `form:"user_id" binding:"omitnil,uuid"`
+	PrizeId *string `form:"prize_id" binding:"omitnil,uuid"`
 }
 
 func (f GetWonPrizesFilter) ToDB() dbModels.GetWonPrizesFilter {
