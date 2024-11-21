@@ -268,10 +268,10 @@ paths:
             operationId: getDrawMethods
             parameters:
                 - in: query
-                  name: gameId
+                  name: game_id
                   type: string
                 - in: query
-                  name: participationMethodId
+                  name: participation_id
                   type: string
             responses:
                 "200":
@@ -349,7 +349,7 @@ paths:
             operationId: getParticipationMethods
             parameters:
                 - in: query
-                  name: gameId
+                  name: game_id
                   type: string
             responses:
                 "200":
@@ -376,7 +376,7 @@ paths:
             operationId: getPrizes
             parameters:
                 - in: query
-                  name: gameId
+                  name: game_id
                   type: string
             responses:
                 "200":
@@ -455,7 +455,7 @@ paths:
             operationId: getUsers
             parameters:
                 - in: query
-                  name: gameId
+                  name: game_id
                   type: string
             responses:
                 "200":
@@ -510,13 +510,13 @@ paths:
             operationId: getWonPrizes
             parameters:
                 - in: query
-                  name: gameId
+                  name: game_id
                   type: string
                 - in: query
-                  name: userId
+                  name: user_id
                   type: string
                 - in: query
-                  name: prizeId
+                  name: prize_id
                   type: string
             responses:
                 "200":
