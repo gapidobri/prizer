@@ -57,6 +57,10 @@ table "participation_methods" {
     type = uuid
     null = true
   }
+  column "participation_mail_template_id" {
+    type = uuid
+    null = true
+  }
   primary_key {
     columns = [
       column.participation_method_id
@@ -76,6 +80,12 @@ table "participation_methods" {
   }
   foreign_key "lose_mail_template_fk" {
     columns = [column.lose_mail_template_id]
+    ref_columns = [table.mail_templates.column.mail_template_id]
+    on_delete = SET_NULL
+    on_update = CASCADE
+  }
+  foreign_key "participation_mail_template_fk" {
+    columns = [column.participation_mail_template_id]
     ref_columns = [table.mail_templates.column.mail_template_id]
     on_delete = SET_NULL
     on_update = CASCADE
