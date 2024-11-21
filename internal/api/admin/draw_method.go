@@ -12,10 +12,10 @@ func (s *Server) drawMethodRoutes() {
 	// swagger:route GET /draw-methods admin drawMethods getDrawMethods
 	//
 	// parameters:
-	//   + name: gameId
+	//   + name: game_id
 	//     in: query
 	//     type: string
-	//   + name: participationMethodId
+	//   + name: participation_id
 	//     in: query
 	//     type: string
 	//

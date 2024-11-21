@@ -12,7 +12,7 @@ func (s *Server) userRoutes() {
 	// swagger:route GET /users admin users getUsers
 	//
 	// parameters:
-	//   + name: gameId
+	//   + name: game_id
 	//     in: query
 	//     type: string
 	//

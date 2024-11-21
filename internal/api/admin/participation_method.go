@@ -12,7 +12,7 @@ func (s *Server) participationMethodRoutes() {
 	// swagger:route GET /participation-methods admin participationMethods getParticipationMethods
 	//
 	// parameters:
-	//   + name: gameId
+	//   + name: game_id
 	//     in: query
 	//     type: string
 	//

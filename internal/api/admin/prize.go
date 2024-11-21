@@ -12,7 +12,7 @@ func (s *Server) prizeRoutes() {
 	// swagger:route GET /prizes admin prizes getPrizes
 	//
 	// parameters:
-	//   + name: gameId
+	//   + name: game_id
 	//     in: query
 	//     type: string
 	//
